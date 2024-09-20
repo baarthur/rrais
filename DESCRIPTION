@@ -1,0 +1,24 @@
+Package: rrais
+Title: Tidy and Manipulate the Brazilian Employer-Employee Dataset
+Version: 0.0.1
+Authors@R: 
+    person("Arthur", "Bazolli", email = "baarthur0@outlook.com", role = c("aut", "cre"))
+Description: What the package does (one paragraph).
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.1
+Imports:
+  data.table,
+  dplyr,
+  janitor,
+  lubridate,
+  magrittr,
+  purrr,
+  readr,
+  rlang,
+  stringi,
+  stringr,
+  tidyselect
+Depends: 
+  R (>= 2.10)
