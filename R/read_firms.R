@@ -9,159 +9,121 @@
 #' @param year Reserved for future use.
 #' @param rais_negativa Should only establishments with active employees in that year  ("Rais Negativa") be selected?
 #'  Default is `TRUE`.
-#' @param discard Discard a pre-selected set of variables? Default is `TRUE`.
-#' @param discard_other A `vector` of variables to discard instead of (or in addition to) the default set.
-#' @param col_select A `vector` of variables to be selected.
+#' @param columns A `vector` of variables to be selected.
 #' @param \dots Other variables passed on to readr::read_delim
 #' @returns A `tibble`
 #' @importFrom data.table as.data.table
-#' @importFrom dplyr select rename_with case_when mutate across
-#' @importFrom janitor clean_names
-#' @importFrom purrr possibly
+#' @importFrom dplyr filter pull select rename rename_with case_when mutate across
+#' @importFrom purrr map_chr
 #' @importFrom readr read_delim locale
 #' @importFrom rlang :=
-#' @importFrom stringr str_replace str_pad str_extract
+#' @importFrom stringr str_replace str_pad str_extract str_sub
 #' @importFrom tidyselect starts_with any_of everything
 #' @export
+
+
 
 # read_firms ----------------------------------------------------------------------------------
 
 read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter = NULL, address_filter = NULL,
-                       street_filter = NULL, delim = NULL, year = NULL, rais_negativa = TRUE, discard = T,
-                       discard_other = NULL, col_select = NULL, ...) {
+                       street_filter = NULL, delim = NULL, year = NULL, rais_negativa = TRUE, columns = NULL, ...) {
 
   ## parameters
-  delim <- ifelse(is.null(delim), ";", delim)
+  delim <- if(is.null(delim)) {
+    if(is.null(year)) {
+      ";"
+    } else {
+      ifelse(year<2010, "|", ";")
+    }
+  } else delim
 
-  . <- ind_rais_negativa <- municipio <- endereco <- nome_logradouro <- cep <- cnpj_cei <- NULL
-  cnae_95_classe <- addr_tidy <- street_type <- street_name <- NULL
+  .data <- ind_rais_negativa <- municipio <- endereco <- nome_logradouro <- cep <- cnpj_cei <- ibge_subsetor <- NULL
+  cnae_95_classe <- addr_tidy <- street_type <- street_name <- col_types <- new_name <- alias <- NULL
 
-nome_logradouro
-  undesired_cols <- c(
-    discard_other,
-    # 2003-2011
-    "EMAIL", "IND PAT", "TELEF CONT", "RAZAO SOCIAL", "RADIC CNPJ", "IND ATIV ANO",
-    # 2011 onwards
-    "Email Estabelecimento", "Ind Estab Participa PAT", "N\\u00c3\\u00bamero Telefone Empresa", "Raz\\u00c3\\u00a3o Social",
-    "CNPJ Raiz", "UF", "Ind Atividade Ano"
-  )
 
-  new_names <- c(
-    cei_vinc = "cei_vinculado", clas_cnae_95 = "cnae_95_classe", identificad = "cnpj_cei",
-    data_abertura = "dt_abert_com", dt_baixa_com = "data_baixa", dt_encer_or = "data_encerramento",
-    ind_cei_vinc = "ind_cei_vinculado", ind_rais_neg = "ind_rais_negativa",
-    natur_jur = "natureza_juridica",
-    tipo_estbl = "tipo_estab", estoque = "qtd_vinculos_ativos", est_clt_out = "qtd_vinculos_clt",
-    estoque_esta = "qtd_vinculos_estatutarios", tamestab = "tamanho_estabelecimento",
-    tipo_estbl = "tipo_estab", subs_ibge = "ibge_subsetor",
-    clas_cnae_20 = "cnae_20_classe", sb_clas_20 = "cnae_20_subclasse",
-    nat_juridica = "natureza_juridica",
-    cep_estab = "cep", cnae_2_0_classe = "cnae_20_classe", cnae_2_0_subclasse = "cnae_20_subclasse"
-  )
+  ## load dictionary and column types
+  types <- if(is.null(year)) {
+    NULL
+  } else {
+    readRDS("inst/extdata/col_types_firms.RDS") %>%
+      filter(.data$year == !!year) %>%
+      pull(col_types)
+  }
+
+  dic <- readRDS("data/dic_firms.rda") %>%
+    select(new_name, alias) %>%
+    tibble::deframe()
+
+  rename_ibge <- readRDS("inst/extdata/rename_ibge.RDS") %>%
+    select(alias, new_name) %>%
+    mutate(new_name = as.character(new_name)) %>%
+    tibble::deframe()
 
 
   ## tidying functions
-  try_pad <- possibly(str_pad, otherwise = NA)
-  try_chr <- possibly(as.character, otherwise = NA)
-  try_num <- possibly(as.numeric, otherwise = NA)
-  try_ext <- possibly(str_extract, otherwise = NA)
-  decimal_repair <- function(x) {str_replace(x, ",", ".") %>% as.numeric()}
-  try_dec_repair <- possibly(decimal_repair)
-  date_repair <- function(x) {str_pad(x, 8, "left", "0") %>% lubridate::dmy()}
+  # try_pad <- possibly(str_pad, otherwise = NA)
+  # try_chr <- possibly(as.character, otherwise = NA)
+  # try_num <- possibly(as.numeric, otherwise = NA)
+  # try_ext <- possibly(str_extract, otherwise = NA)
+  # try_dec_repair <- possibly(decimal_repair)
 
 
   ## read raw file
-  df <- if(discard) {
-    read_delim(
-      file = file,
-      delim = delim,
-      locale = locale(encoding = "latin1", decimal_mark = ",", date_format = "%d/%m/%y"),
-      col_select = -any_of(undesired_cols),
-      ...
-    )
-  } else {
-    read_delim(
-      file = file,
-      delim = delim,
-      locale = locale(encoding = "latin1", decimal_mark = ",", date_format = "%d/%m/%y"),
-      col_select = any_of(col_select),
-      ...
-    )
-  }
+  df <- read_delim(
+    file = file,
+    delim = delim,
+    locale = locale(encoding = "latin1", decimal_mark = ","),
+    col_select = !!columns,
+    col_types = types,
+    ...
+  )
+
 
   ## fix names
-  df <- df %>%
-    clean_names()
+  df <- df %>% rename(any_of(dic))
 
-  df <- df %>%
-    rename_with(
-      \(old_name) case_when(old_name %in% names(new_names) ~ new_names[old_name], .default = old_name),
-      .cols = everything()
-    )
 
   ## filters
   df <- as.data.table(df)
   df <- if(rais_negativa) df else df[ind_rais_negativa == 0, ]
   df <- if(is.null(firm_filter)) df else df[cnpj_cei %in% firm_filter, ]
-  df <- if(is.null(muni_filter)) df else df[municipio %in% muni_filter, ]
-  df <- if(is.null(address_filter)) df else df[endereco %in% address_filter, ]
+  df <- if(is.null(cep_filter)) df else df[cep %in% cep_filter, ]
   df <- if(is.null(street_filter)) df else df[nome_logradouro %in% street_filter, ]
+  df <- if(is.null(address_filter)) df else df[endereco %in% address_filter, ]
+  df <- if(is.null(muni_filter)) df else df[municipio %in% muni_filter, ]
 
-  # df <- if(year < 2008 & year != 2006) {
-  #   df %>% rename(
-  #     cei_vinculado = cei_vinc, cnae_95_classe = clas_cnae_95, cnpj_cei = identificad,
-  #     data_abertura = dt_abert_com, data_baixa = dt_baixa_com, data_encerramento = dt_encer_or,
-  #     ind_cei_vinculado = ind_cei_vinc, ind_rais_negativa = ind_rais_neg,
-  #     natureza_juridica = natur_jur,
-  #     tipo_estab = tipo_estbl, qtd_vinculos_ativos = estoque, qtd_vinculos_clt = est_clt_out,
-  #     qtd_vinculos_estatutarios = estoque_esta, tamanho_estabelecimento = tamestab,
-  #     tipo_estab = tipo_estbl, ibge_subsetor = subs_ibge
-  #   )
-  # } else {
-  #   if(year == 2006) {
-  #     df %>% rename(
-  #       cei_vinculado = cei_vinc, cnae_95_classe = clas_cnae_95, cnpj_cei = identificad,
-  #       data_abertura = dt_abert_com, data_baixa = dt_baixa_com, data_encerramento = dt_encer_or,
-  #       ind_cei_vinculado = ind_cei_vinc, ind_rais_negativa = ind_rais_neg,
-  #       natureza_juridica = natur_jur,
-  #       tipo_estab = tipo_estbl, qtd_vinculos_ativos = estoque, qtd_vinculos_clt = est_clt_out,
-  #       qtd_vinculos_estatutarios = estoque_esta, tamanho_estabelecimento = tamestab,
-  #       tipo_estab = tipo_estbl, ibge_subsetor = subs_ibge,
-  #       cnae_20_classe = clas_cnae_20, cnae_20_subclasse = sb_clas_20
-  #     )
-  #   } else {
-  #     if(year < 2011) {
-  #       df %>% rename(
-  #         cei_vinculado = cei_vinc, cnae_95_classe = clas_cnae_95, cnpj_cei = identificad,
-  #         data_abertura = dt_abert_com, data_baixa = dt_baixa_com, data_encerramento = dt_encer_or,
-  #         ind_cei_vinculado = ind_cei_vinc, ind_rais_negativa = ind_rais_neg,
-  #         natureza_juridica = nat_juridica,
-  #         tipo_estab = tipo_estbl, qtd_vinculos_ativos = estoque, qtd_vinculos_clt = est_clt_out,
-  #         qtd_vinculos_estatutarios = estoque_esta, tamanho_estabelecimento = tamestab,
-  #         tipo_estab = tipo_estbl, ibge_subsetor = subs_ibge,
-  #         cnae_20_classe = clas_cnae_20, cnae_20_subclasse = sb_clas_20
-  #       )
-  #     } else {
-  #       df %>% rename(cep = cep_estab, cnae_20_classe = cnae_2_0_classe, cnae_20_subclasse = cnae_2_0_subclasse)
-  #     }
-  #   }
-  # }
-
-  ## filters
-  df <- df[ , cep := clean_postcodes(cep)]
-  df <- if(is.null(cep_filter)) df else df[cep %in% cep_filter, ] ### does not work well!
-
-  df <- df[ , cnpj_cei := try_pad(cnpj_cei, 14, "left", "0")]
-
+#
+#   ## filters
+#   df <- df[ , cep := clean_postcodes(cep)]
+#   df <- if(is.null(cep_filter)) df else df[cep %in% cep_filter, ] ### does not work well!
+#
+#   df <- df[ , cnpj_cei := try_pad(cnpj_cei, 14, "left", "0")]
+#
   ## tidying
   df <- df %>%
+    mutate(ano = year, .before = everything()) %>%
     mutate(
-      across(starts_with(c("qtd", "tamanho", "cei_v")), try_num),
-      across(starts_with(c("tipo","cnae", "ibge_")), try_chr),
-      across(starts_with("data"), \(x) try_pad(x, 8, "left", "0"), .names = "{.col}"),
-      .keep = "unused"
-    ) %>%
-    mutate(cnae_95_classe = try_ext(cnae_95_classe, "\\d+"))
+      across(
+        starts_with(c("cei_", "cep", "cnae_", "cnpj_", "telefone")),
+        \(x) stringr::str_remove_all(x, "\\D") %>% as.character()
+      ),
+      across(
+        starts_with(c("qtd_", "tamanho", "municipio")),
+        \(x) stringr::str_remove_all(x, "\\D") %>% as.numeric()
+      )
+    )
+
+  df <- df %>%
+      mutate(across(starts_with("data_"), date_repair))
+
+  df <- if(year < 2011) {
+    df %>%
+      mutate(
+        ibge_subsetor = as.integer(str_replace_all(ibge_subsetor, rename_ibge))
+      )
+  } else {
+    df
+  }
 
 
 

@@ -31,12 +31,6 @@ read_workers(
 \item{vinculo_ativo}{Should only workers that were active at the end of the year be selected?
 Default is \code{TRUE}.}
 
-\item{discard}{Discard a pre-selected set of variables? Default is \code{TRUE}.}
-
-\item{discard_other}{A \code{vector} of variables to discard instead of (or in addition to) the default set.}
-
-\item{col_select}{A \code{vector} of variables to be selected.}
-
 \item{\dots}{Other variables passed on to readr::read_delim}
 }
 \value{

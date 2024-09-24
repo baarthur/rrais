@@ -159,6 +159,45 @@ street_sweeper <- function(df, addr, sep_type = TRUE, sep_number = TRUE, keep_or
 
 
 
+# decimal_repair --------------------------------------------------------------------------------------------------
+
+#' Replace decimal mark for numbers read as characters
+#' @param x A `vector` of soon-to-be numbers.
+
+decimal_repair <- function(x) {str_replace(x, ",", ".") %>% as.numeric()}
+
+
+
+# date_repair -----------------------------------------------------------------------------------------------------
+
+#' Fix dates to include missing zeroes
+#' @param x A `character` vector.
+#' @details
+#' The function will result in a `character` vector in the standard Brazilian "DDMMAAAA" format. It can be easily
+#'  converted into a functional date variable, e.g. with `lubridate::dmy(x)`.
+
+date_repair <- function(x) {
+  x %>%
+    map_chr(
+      \(date)
+      if(nchar(date) == 8) {
+        date
+      } else {
+        if(str_sub(date, -6, -6) == 0 & nchar(date == 7)) {
+          str_pad(date, 8, "left", "0")
+        } else {
+          if(nchar(date) == 6) {
+            paste0("0", str_sub(date, 1, 1), "0", str_sub(date, 2, 2), str_sub(date, -4, -1))
+          } else {
+            paste0(str_sub(date, 1, 2), "0", str_sub(date, -5, -5), str_sub(date, -4, -1))
+          }
+        }
+      }
+    )
+}
+
+
+
 # reprex --------------------------------------------------------------------------------------
 
 # library(magrittr)

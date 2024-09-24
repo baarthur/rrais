@@ -14,9 +14,7 @@ read_firms(
   delim = NULL,
   year = NULL,
   rais_negativa = TRUE,
-  discard = T,
-  discard_other = NULL,
-  col_select = NULL,
+  columns = NULL,
   ...
 )
 }
@@ -40,11 +38,7 @@ read_firms(
 \item{rais_negativa}{Should only establishments with active employees in that year  ("Rais Negativa") be selected?
 Default is \code{TRUE}.}
 
-\item{discard}{Discard a pre-selected set of variables? Default is \code{TRUE}.}
-
-\item{discard_other}{A \code{vector} of variables to discard instead of (or in addition to) the default set.}
-
-\item{col_select}{A \code{vector} of variables to be selected.}
+\item{columns}{A \code{vector} of variables to be selected.}
 
 \item{\dots}{Other variables passed on to readr::read_delim}
 }

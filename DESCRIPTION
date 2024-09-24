@@ -19,6 +19,8 @@ Imports:
   rlang,
   stringi,
   stringr,
+  tibble,
   tidyselect
 Depends: 
   R (>= 2.10)
+LazyData: true
