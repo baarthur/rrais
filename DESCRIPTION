@@ -11,12 +11,12 @@ RoxygenNote: 7.3.1
 Imports:
   data.table,
   dplyr,
-  janitor,
   lubridate,
   magrittr,
   purrr,
   readr,
   rlang,
+  stats,
   stringi,
   stringr,
   tibble,

@@ -43,7 +43,7 @@ Default is \code{TRUE}.}
 \item{\dots}{Other variables passed on to readr::read_delim}
 }
 \value{
-A \code{tibble}
+A \code{data.table}
 }
 \description{
 Read Establishments from RAIS dataset.

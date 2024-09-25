@@ -11,9 +11,7 @@ read_workers(
   delim = NULL,
   year = NULL,
   vinculo_ativo = F,
-  discard = T,
-  discard_other = NULL,
-  col_select = NULL,
+  columns = NULL,
   ...
 )
 }
@@ -31,10 +29,12 @@ read_workers(
 \item{vinculo_ativo}{Should only workers that were active at the end of the year be selected?
 Default is \code{TRUE}.}
 
+\item{columns}{A \code{vector} of variables to be selected.}
+
 \item{\dots}{Other variables passed on to readr::read_delim}
 }
 \value{
-A \code{tibble}
+A \code{data.table}
 }
 \description{
 Read Workers from RAIS dataset.

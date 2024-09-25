@@ -11,13 +11,14 @@
 #'  Default is `TRUE`.
 #' @param columns A `vector` of variables to be selected.
 #' @param \dots Other variables passed on to readr::read_delim
-#' @returns A `tibble`
+#' @returns A `data.table`
 #' @importFrom data.table as.data.table
-#' @importFrom dplyr filter pull select rename rename_with case_when mutate across
+#' @importFrom dplyr across case_match filter left_join mutate pull rename rename_with select tibble
 #' @importFrom purrr map_chr
 #' @importFrom readr read_delim locale
 #' @importFrom rlang :=
-#' @importFrom stringr str_replace str_pad str_extract str_sub
+#' @importFrom stats na.omit
+#' @importFrom stringr str_detect str_replace
 #' @importFrom tidyselect starts_with any_of everything
 #' @export
 
@@ -37,8 +38,9 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
     }
   } else delim
 
-  .data <- ind_rais_negativa <- municipio <- endereco <- nome_logradouro <- cep <- cnpj_cei <- ibge_subsetor <- NULL
-  cnae_95_classe <- addr_tidy <- street_type <- street_name <- col_types <- new_name <- alias <- NULL
+  .data <- alias <- addr_tidy <- cep <- cnae_95_classe <- cnpj_cei <- col_types <- endereco <- from <- NULL
+  ibge_subsetor <- ind_rais_negativa <- municipio <- new_name <- nome_logradouro <- rename_ibge <- NULL
+  skips <- street_type <- street_name <- to <- NULL
 
 
   ## load dictionary and column types
@@ -50,14 +52,23 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
       pull(col_types)
   }
 
-  dic <- readRDS("data/dic_firms.rda") %>%
+  load("data/dic_firms.rda")
+
+  dic_firms <- dic_firms %>%
+    filter(from <= year & to >= year & !str_detect(skips, as.character(year)))
+
+  renamer <- dic_firms %>%
     select(new_name, alias) %>%
     tibble::deframe()
 
-  rename_ibge <- readRDS("inst/extdata/rename_ibge.RDS") %>%
-    select(alias, new_name) %>%
-    mutate(new_name = as.character(new_name)) %>%
-    tibble::deframe()
+  columns <- if(is.null(columns)) {
+    NULL
+  } else {
+    columns <- tibble(ano = year, new_name = columns) %>%
+      left_join(dic_firms) %>%
+      na.omit() %>%
+      pull(alias)
+  }
 
 
   ## tidying functions
@@ -80,7 +91,7 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
 
 
   ## fix names
-  df <- df %>% rename(any_of(dic))
+  df <- df %>% rename(any_of(renamer))
 
 
   ## filters
@@ -92,23 +103,17 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
   df <- if(is.null(address_filter)) df else df[endereco %in% address_filter, ]
   df <- if(is.null(muni_filter)) df else df[municipio %in% muni_filter, ]
 
-#
-#   ## filters
-#   df <- df[ , cep := clean_postcodes(cep)]
-#   df <- if(is.null(cep_filter)) df else df[cep %in% cep_filter, ] ### does not work well!
-#
-#   df <- df[ , cnpj_cei := try_pad(cnpj_cei, 14, "left", "0")]
-#
+
   ## tidying
   df <- df %>%
     mutate(ano = year, .before = everything()) %>%
     mutate(
+      # across(
+        # starts_with(c("cep", "cnae_", "telefone")),
+        # \(x) stringr::str_remove_all(x, "\\D") %>% as.character()
+      # ),
       across(
-        starts_with(c("cei_", "cep", "cnae_", "cnpj_", "telefone")),
-        \(x) stringr::str_remove_all(x, "\\D") %>% as.character()
-      ),
-      across(
-        starts_with(c("qtd_", "tamanho", "municipio")),
+        starts_with(c("qtd_", "tamanho", "municipio", "escolaridade", "genero", "dia_", "mes_")),
         \(x) stringr::str_remove_all(x, "\\D") %>% as.numeric()
       )
     )
@@ -116,7 +121,10 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
   df <- df %>%
       mutate(across(starts_with("data_"), date_repair))
 
-  df <- if(year < 2011) {
+  df <- df %>%
+    mutate(across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), decimal_repair))
+
+  df <- if(year < 2011 & "ibge_subsetor" %in% colnames(df)) {
     df %>%
       mutate(
         ibge_subsetor = as.integer(str_replace_all(ibge_subsetor, rename_ibge))

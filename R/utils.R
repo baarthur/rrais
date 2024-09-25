@@ -172,6 +172,7 @@ decimal_repair <- function(x) {str_replace(x, ",", ".") %>% as.numeric()}
 
 #' Fix dates to include missing zeroes
 #' @param x A `character` vector.
+#' @importFrom stringr str_sub str_pad
 #' @details
 #' The function will result in a `character` vector in the standard Brazilian "DDMMAAAA" format. It can be easily
 #'  converted into a functional date variable, e.g. with `lubridate::dmy(x)`.
