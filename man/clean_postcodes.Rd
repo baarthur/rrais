@@ -2,8 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{clean_postcodes}
 \alias{clean_postcodes}
-\title{Auxiliary functions
-Clean postcodes
+\title{Clean postcodes
 Standardize Brazilian postal codes (CEP) to 8-digit, all-numeric format.}
 \usage{
 clean_postcodes(x)
@@ -12,7 +11,6 @@ clean_postcodes(x)
 \item{x}{A \code{vector} or data column of \code{character} class.}
 }
 \description{
-Auxiliary functions
 Clean postcodes
 Standardize Brazilian postal codes (CEP) to 8-digit, all-numeric format.
 }

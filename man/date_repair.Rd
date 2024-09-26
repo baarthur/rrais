@@ -2,7 +2,8 @@
 % Please edit documentation in R/utils.R
 \name{date_repair}
 \alias{date_repair}
-\title{Fix dates to include missing zeroes}
+\title{Auxiliary functions
+Fix dates to include missing zeroes}
 \usage{
 date_repair(x)
 }
@@ -10,6 +11,7 @@ date_repair(x)
 \item{x}{A \code{character} vector.}
 }
 \description{
+Auxiliary functions
 Fix dates to include missing zeroes
 }
 \details{

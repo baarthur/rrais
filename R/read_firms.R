@@ -16,9 +16,8 @@
 #' @importFrom dplyr across case_match filter left_join mutate pull rename rename_with select tibble
 #' @importFrom purrr map_chr
 #' @importFrom readr read_delim locale
-#' @importFrom rlang :=
 #' @importFrom stats na.omit
-#' @importFrom stringr str_detect str_replace
+#' @importFrom stringr str_detect str_remove_all str_replace_all
 #' @importFrom tidyselect starts_with any_of everything
 #' @export
 
@@ -38,29 +37,28 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
     }
   } else delim
 
-  .data <- alias <- addr_tidy <- cep <- cnae_95_classe <- cnpj_cei <- col_types <- endereco <- from <- NULL
-  ibge_subsetor <- ind_rais_negativa <- municipio <- new_name <- nome_logradouro <- rename_ibge <- NULL
-  skips <- street_type <- street_name <- to <- NULL
+  alias <- addr_tidy <- cep <- cnae_95_classe <- cnpj_cei <- col_types <- endereco <- from <- ibge_subsetor <- NULL
+  ind_rais_negativa <- municipio <- new_name <- nome_logradouro <- skips <- street_type <- street_name <- to <- NULL
 
 
   ## load dictionary and column types
-  types <- if(is.null(year)) {
-    NULL
-  } else {
-    readRDS("inst/extdata/col_types_firms.RDS") %>%
-      filter(.data$year == !!year) %>%
-      pull(col_types)
-  }
 
+  ### column types
+  types <- readRDS("inst/extdata/col_types_workers.RDS") %>%
+    filter(.data$year == !!year) %>%
+    pull(col_types)
+
+  ### dictionary
   load("data/dic_firms.rda")
-
   dic_firms <- dic_firms %>%
     filter(from <= year & to >= year & !str_detect(skips, as.character(year)))
 
+  ### new names
   renamer <- dic_firms %>%
     select(new_name, alias) %>%
     tibble::deframe()
 
+  ### optional column selector
   columns <- if(is.null(columns)) {
     NULL
   } else {
@@ -71,26 +69,22 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
   }
 
 
-  ## tidying functions
-  # try_pad <- possibly(str_pad, otherwise = NA)
-  # try_chr <- possibly(as.character, otherwise = NA)
-  # try_num <- possibly(as.numeric, otherwise = NA)
-  # try_ext <- possibly(str_extract, otherwise = NA)
-  # try_dec_repair <- possibly(decimal_repair)
-
 
   ## read raw file
   df <- read_delim(
     file = file,
     delim = delim,
-    locale = locale(encoding = "latin1", decimal_mark = ","),
+    locale = locale(encoding = "ISO-8859-1", decimal_mark = ","),
     col_select = !!columns,
     col_types = types,
     ...
   )
 
 
-  ## fix names
+
+  ## pre-filtering
+
+  ### standardize variable names
   df <- df %>% rename(any_of(renamer))
 
 
@@ -104,28 +98,18 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
   df <- if(is.null(muni_filter)) df else df[municipio %in% muni_filter, ]
 
 
+
   ## tidying
-  df <- df %>%
-    mutate(ano = year, .before = everything()) %>%
-    mutate(
-      # across(
-        # starts_with(c("cep", "cnae_", "telefone")),
-        # \(x) stringr::str_remove_all(x, "\\D") %>% as.character()
-      # ),
-      across(
-        starts_with(c("qtd_", "tamanho", "municipio", "escolaridade", "genero", "dia_", "mes_")),
-        \(x) stringr::str_remove_all(x, "\\D") %>% as.numeric()
-      )
-    )
 
-  df <- df %>%
-      mutate(across(starts_with("data_"), date_repair))
+  ### standardize IBGE industry variable
+  if(year < 2011 & "ibge_subsetor" %in% colnames(df)) {
 
-  df <- df %>%
-    mutate(across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), decimal_repair))
+    rename_ibge <- readRDS("inst/extdata/rename_ibge.RDS") %>%
+      select(alias, new_name) %>%
+      mutate(new_name = as.character(new_name)) %>%
+      tibble::deframe()
 
-  df <- if(year < 2011 & "ibge_subsetor" %in% colnames(df)) {
-    df %>%
+    df <- df %>%
       mutate(
         ibge_subsetor = as.integer(str_replace_all(ibge_subsetor, rename_ibge))
       )
@@ -133,23 +117,15 @@ read_firms <- function(file, firm_filter = NULL, muni_filter = NULL, cep_filter 
     df
   }
 
+  ### characters to integers, date repair, and replace comma by dot
+  df <- df %>%
+    mutate(ano = year, .before = everything()) %>%
+    mutate(
+      across(starts_with(c("qtd_", "tamanho", "municipio", "escolaridade", "genero", "dia_", "mes_")),
+             \(x) str_remove_all(x, "\\D") %>% as.numeric()
+      ),
+      across(starts_with("data_"), date_repair),
+      across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), decimal_repair)
+    )
 
-
-  ## DEPRECATED: REMOVE ME!
-#
-# num_cols <- names(df)[grep("^(qtd_|tamanho_)", names(df))]
-# chr_cols <- names(df)[grep("^(tipo|cnae|cei_v|ibge_)", names(df))]
-# data_cols <- names(df)[grep("^data_", names(df))]
-#
-# df[
-#   , cnpj_cei := try_pad(cnpj_cei, 14, "left", "0")
-# ][
-#   , (num_cols) := lapply(.SD, try_num), .SDcols = num_cols
-# ][
-#   , (chr_cols) := lapply(.SD, try_chr), .SDcols = chr_cols
-# ][
-#   , (data_cols) := lapply(.SD, function(x) try_pad(x, 8, "left", "0")), .SDcols = data_cols
-# ][
-#   , cnae_95_classe := try_ext(cnae_95_classe, "\\d+")
-# ]
-}
+  }
