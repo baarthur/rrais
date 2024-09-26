@@ -11,11 +11,10 @@ street_sweeper(df, addr, split = TRUE, keep_original = TRUE)
 
 \item{addr}{\verb{<data-masking>} Column in \code{df} with addresses.}
 
+\item{split}{If \code{TRUE} (default), separates the street type (e.g., "Rua", "Avenida"), name, number, and "other"
+(floor, unit etc) into specific columns.}
+
 \item{keep_original}{If \code{TRUE} (default), original \code{addr} data is preserved.}
-
-\item{sep_type}{If \code{TRUE} (default), separates the street type (e.g., "Rua", "Avenida") into a specific column.}
-
-\item{sep_number}{If \code{TRUE} (default), separates the address number into a specific column.}
 }
 \description{
 Tidy addresses from RAIS dataset

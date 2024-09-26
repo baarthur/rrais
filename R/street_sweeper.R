@@ -1,7 +1,7 @@
 #' Tidy addresses from RAIS dataset
 #' @param df A `data.frame` or any object coercible to it.
 #' @param addr `<data-masking>` Column in `df` with addresses.
-#' @param seplit If `TRUE` (default), separates the street type (e.g., "Rua", "Avenida"), name, number, and "other"
+#' @param split If `TRUE` (default), separates the street type (e.g., "Rua", "Avenida"), name, number, and "other"
 #'  (floor, unit etc) into specific columns.
 #' @param keep_original If `TRUE` (default), original `addr` data is preserved.
 #' @importFrom dplyr mutate
