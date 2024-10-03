@@ -1,0 +1,539 @@
+﻿alias,true_name
+avenida,avenida
+abenida,avenida
+ava,avenida
+ave,avenida
+a.v.,avenida
+a.v,avenida
+av.,avenida
+av,avenida
+alameda,alameda
+ala,alameda
+al.,alameda
+al,alameda
+ruaa,rua
+rua,rua
+ra.,rua
+ra,rua
+r.,rua
+r,rua
+beco,beco
+calcadao,calcadao
+calcada,calcada
+caminho,caminho
+largo,largo
+lrg.,largo
+lrg,largo
+lg.,largo
+lg,largo
+rodovia,rodovia
+rod.,rodovia
+rod,rodovia
+rdv.,rodovia
+rdv,rodovia
+rd.,rodovia
+rd,rodovia
+estrada,estrada
+estr.,estrada
+estr,estrada
+marginal,marginal
+marg.,marginal
+marg,marginal
+mrg.,marginal
+mrg,marginal
+estacao,estacao
+est.,estacao
+est,estacao
+praca,praca
+pca.,praca
+pca,praca
+prca.,praca
+prca,praca
+prc.,praca
+prc,praca
+pc.,praca
+pc,praca
+patio,patio
+pateo,patio
+ponte,ponte
+pte.,ponte
+pte,ponte
+pt.,ponte
+pt,ponte
+passagem,passagem
+travessa,travessa
+trav.,travessa
+trav,travessa
+trv.,travessa
+trv,travessa
+tv.,travessa
+tv,travessa
+tunel,tunel
+tun.,tunel
+tun,tunel
+tn.,tunel
+tn,tunel
+trevo,trevo
+to.,trevo
+vereda,vereda
+vrd.,vereda
+vrd,vereda
+vr.,vereda
+vr,vereda
+viaduto,viaduto
+viad.,viaduto
+viad,viaduto
+vdto.,viaduto
+vdto,viaduto
+vd.,viaduto
+vd,viaduto
+via elevada,via elevada
+v. el.,via elevada
+v. el,via elevada
+v el.,via elevada
+v el,via elevada
+via el.,via elevada
+via el,via elevada
+via va.,via elevada
+via va,via elevada
+va.,via elevada
+va,via elevada
+ladeira,ladeira
+ld.,ladeira
+ld,ladeira
+acesso,acesso
+ac.,acesso
+avenida avenida,avenida
+abenida avenida,avenida
+ava avenida,avenida
+ave avenida,avenida
+a.v. avenida,avenida
+a.v avenida,avenida
+av. avenida,avenida
+av avenida,avenida
+avenida abenida,avenida
+abenida abenida,avenida
+ava abenida,avenida
+ave abenida,avenida
+a.v. abenida,avenida
+a.v abenida,avenida
+av. abenida,avenida
+av abenida,avenida
+avenida ava ,avenida
+abenida ava ,avenida
+ava ava ,avenida
+ave ava ,avenida
+a.v. ava ,avenida
+a.v ava ,avenida
+av. ava ,avenida
+av ava ,avenida
+avenida ave ,avenida
+abenida ave ,avenida
+ava ave ,avenida
+ave ave ,avenida
+a.v. ave ,avenida
+a.v ave ,avenida
+av. ave ,avenida
+av ave ,avenida
+avenida a.v.,avenida
+abenida a.v.,avenida
+ava a.v.,avenida
+ave a.v.,avenida
+a.v. a.v.,avenida
+a.v a.v.,avenida
+av. a.v.,avenida
+av a.v.,avenida
+avenida a.v ,avenida
+abenida a.v ,avenida
+ava a.v ,avenida
+ave a.v ,avenida
+a.v. a.v ,avenida
+a.v a.v ,avenida
+av. a.v ,avenida
+av a.v ,avenida
+avenida av.,avenida
+abenida av.,avenida
+ava av.,avenida
+ave av.,avenida
+a.v. av.,avenida
+a.v av.,avenida
+av. av.,avenida
+av av.,avenida
+avenida av ,avenida
+abenida av ,avenida
+ava av ,avenida
+ave av ,avenida
+a.v. av ,avenida
+a.v av ,avenida
+av. av ,avenida
+av av ,avenida
+alameda avenida,avenida
+ala avenida,avenida
+al. avenida,avenida
+al avenida,avenida
+alameda abenida,avenida
+ala abenida,avenida
+al. abenida,avenida
+al abenida,avenida
+alameda ava ,avenida
+ala ava ,avenida
+al. ava ,avenida
+al ava ,avenida
+alameda ave ,avenida
+ala ave ,avenida
+al. ave ,avenida
+al ave ,avenida
+alameda a.v.,avenida
+ala a.v.,avenida
+al. a.v.,avenida
+al a.v.,avenida
+alameda a.v ,avenida
+ala a.v ,avenida
+al. a.v ,avenida
+al a.v ,avenida
+alameda av.,avenida
+ala av.,avenida
+al. av.,avenida
+al av.,avenida
+alameda av ,avenida
+ala av ,avenida
+al. av ,avenida
+al av ,avenida
+ruaa avenida,avenida
+rua avenida,avenida
+ra. avenida,avenida
+ra avenida,avenida
+r. avenida,avenida
+r avenida,avenida
+ruaa abenida,avenida
+rua abenida,avenida
+ra. abenida,avenida
+ra abenida,avenida
+r. abenida,avenida
+r abenida,avenida
+ruaa ava ,avenida
+rua ava ,avenida
+ra. ava ,avenida
+ra ava ,avenida
+r. ava ,avenida
+r ava ,avenida
+ruaa ave,avenida
+rua ave,avenida
+ra. ave,avenida
+ra ave,avenida
+r. ave,avenida
+r ave,avenida
+ruaa a.v.,avenida
+rua a.v.,avenida
+ra. a.v.,avenida
+ra a.v.,avenida
+r. a.v.,avenida
+r a.v.,avenida
+ruaa a.v ,avenida
+rua a.v ,avenida
+ra. a.v ,avenida
+ra a.v ,avenida
+r. a.v ,avenida
+r a.v ,avenida
+ruaa av.,avenida
+rua av.,avenida
+ra. av.,avenida
+ra av.,avenida
+r. av.,avenida
+r av.,avenida
+ruaa av ,avenida
+rua av ,avenida
+ra. av ,avenida
+ra av ,avenida
+r. av ,avenida
+r av ,avenida
+avenida alameda,alameda
+abenida alameda,alameda
+ava alameda,alameda
+ave alameda,alameda
+a.v. alameda,alameda
+a.v alameda,alameda
+av. alameda,alameda
+av alameda,alameda
+avenida ala ,alameda
+abenida ala ,alameda
+ava ala,alameda
+ave ala,alameda
+a.v. ala,alameda
+a.v ala,alameda
+av. ala,alameda
+av ala,alameda
+avenida al.,alameda
+abenida al.,alameda
+ava al.,alameda
+ave al.,alameda
+a.v. al.,alameda
+a.v al.,alameda
+av. al.,alameda
+av al.,alameda
+avenida al,alameda
+abenida al,alameda
+ava al,alameda
+ave al,alameda
+a.v. al,alameda
+a.v al,alameda
+av. al,alameda
+av al,alameda
+alameda alameda,alameda
+ala alameda,alameda
+al. alameda,alameda
+al alameda,alameda
+alameda ala,alameda
+ala ala,alameda
+al. ala,alameda
+al ala,alameda
+alameda al.,alameda
+ala al.,alameda
+al. al.,alameda
+al al.,alameda
+alameda al,alameda
+ala al,alameda
+al. al,alameda
+al al,alameda
+ruaa alameda,alameda
+rua alameda,alameda
+ra. alameda,alameda
+ra alameda,alameda
+r. alameda,alameda
+r alameda,alameda
+ruaa ala,alameda
+rua ala,alameda
+ra. ala,alameda
+ra ala,alameda
+r. ala,alameda
+r ala,alameda
+ruaa al.,alameda
+rua al.,alameda
+ra. al.,alameda
+ra al.,alameda
+r. al.,alameda
+r al.,alameda
+ruaa al,alameda
+rua al,alameda
+ra. al,alameda
+ra al,alameda
+r. al,alameda
+r al,alameda
+avenida ruaa,rua
+abenida ruaa,rua
+ava ruaa,rua
+ave ruaa,rua
+a.v. ruaa,rua
+a.v ruaa,rua
+av. ruaa,rua
+av ruaa,rua
+avenida rua,rua
+abenida rua,rua
+ava rua,rua
+ave rua,rua
+a.v. rua,rua
+a.v rua,rua
+av. rua,rua
+av rua,rua
+avenida ra.,rua
+abenida ra.,rua
+ava ra.,rua
+ave ra.,rua
+a.v. ra.,rua
+a.v ra.,rua
+av. ra.,rua
+av ra.,rua
+avenida ra,rua
+abenida ra,rua
+ava ra,rua
+ave ra,rua
+a.v. ra,rua
+a.v ra,rua
+av. ra,rua
+av ra,rua
+avenida r.,rua
+abenida r.,rua
+ava r.,rua
+ave r.,rua
+a.v. r.,rua
+a.v r.,rua
+av. r.,rua
+av r.,rua
+avenida r,rua
+abenida r,rua
+ava r,rua
+ave r,rua
+a.v. r,rua
+a.v r,rua
+av. r,rua
+av r,rua
+alameda ruaa,rua
+ala ruaa,rua
+al. ruaa,rua
+al ruaa,rua
+alameda rua,rua
+ala rua,rua
+al. rua,rua
+al rua,rua
+alameda ra.,rua
+ala ra.,rua
+al. ra.,rua
+al ra.,rua
+alameda ra ,rua
+ala ra ,rua
+al. ra ,rua
+al ra ,rua
+alameda r.,rua
+ala r.,rua
+al. r.,rua
+al r.,rua
+alameda r,rua
+ala r,rua
+al. r,rua
+al r,rua
+ruaa ruaa,rua
+rua ruaa,rua
+ra. ruaa,rua
+ra ruaa,rua
+r. ruaa,rua
+r ruaa,rua
+ruaa rua,rua
+rua rua,rua
+ra. rua,rua
+ra rua,rua
+r. rua,rua
+r rua,rua
+ruaa ra.,rua
+rua ra.,rua
+ra. ra.,rua
+ra ra.,rua
+r. ra.,rua
+r ra.,rua
+ruaa ra ,rua
+rua ra ,rua
+ra. ra ,rua
+ra ra ,rua
+r. ra ,rua
+r ra ,rua
+ruaa r.,rua
+rua r.,rua
+ra. r.,rua
+ra r.,rua
+r. r.,rua
+r r.,rua
+ruaa r,rua
+rua r,rua
+ra. r,rua
+ra r,rua
+r. r,rua
+r r,rua
+rodovia rodovia,rodovia
+rod. rodovia,rodovia
+rod rodovia,rodovia
+rdv. rodovia,rodovia
+rdv rodovia,rodovia
+rd. rodovia,rodovia
+rd rodovia,rodovia
+ rodovia,rodovia
+estrada rodovia,rodovia
+estr. rodovia,rodovia
+estr rodovia,rodovia
+rodovia rod.,rodovia
+rod. rod.,rodovia
+rod rod.,rodovia
+rdv. rod.,rodovia
+rdv rod.,rodovia
+rd. rod.,rodovia
+rd rod.,rodovia
+ rod.,rodovia
+estrada rod.,rodovia
+estr. rod.,rodovia
+estr rod.,rodovia
+rodovia rod ,rodovia
+rod. rod ,rodovia
+rod rod ,rodovia
+rdv. rod ,rodovia
+rdv rod ,rodovia
+rd. rod ,rodovia
+rd rod ,rodovia
+ rod ,rodovia
+estrada rod ,rodovia
+estr. rod ,rodovia
+estr rod ,rodovia
+rodovia rdv.,rodovia
+rod. rdv.,rodovia
+rod rdv.,rodovia
+rdv. rdv.,rodovia
+rdv rdv.,rodovia
+rd. rdv.,rodovia
+rd rdv.,rodovia
+ rdv.,rodovia
+estrada rdv.,rodovia
+estr. rdv.,rodovia
+estr rdv.,rodovia
+rodovia rdv ,rodovia
+rod. rdv ,rodovia
+rod rdv ,rodovia
+rdv. rdv ,rodovia
+rdv rdv ,rodovia
+rd. rdv ,rodovia
+rd rdv ,rodovia
+ rdv ,rodovia
+estrada rdv ,rodovia
+estr. rdv ,rodovia
+estr rdv ,rodovia
+rodovia rd.,rodovia
+rod. rd.,rodovia
+rod rd.,rodovia
+rdv. rd.,rodovia
+rdv rd.,rodovia
+rd. rd.,rodovia
+rd rd.,rodovia
+ rd.,rodovia
+estrada rd.,rodovia
+estr. rd.,rodovia
+estr rd.,rodovia
+rodovia rd ,rodovia
+rod. rd ,rodovia
+rod rd ,rodovia
+rdv. rd ,rodovia
+rdv rd ,rodovia
+rd. rd ,rodovia
+rd rd ,rodovia
+ rd ,rodovia
+estrada rd ,rodovia
+estr. rd ,rodovia
+estr rd ,rodovia
+rodovia estrada,estrada
+rod. estrada,estrada
+rod estrada,estrada
+rdv. estrada,estrada
+rdv estrada,estrada
+rd. estrada,estrada
+rd estrada,estrada
+ estrada,estrada
+estrada estrada,estrada
+estr. estrada,estrada
+estr estrada,estrada
+rodovia estr.,estrada
+rod. estr.,estrada
+rod estr.,estrada
+rdv. estr.,estrada
+rdv estr.,estrada
+rd. estr.,estrada
+rd estr.,estrada
+ estr.,estrada
+estrada estr.,estrada
+estr. estr.,estrada
+estr estr.,estrada
+rodovia estr ,estrada
+rod. estr ,estrada
+rod estr ,estrada
+rdv. estr ,estrada
+rdv estr ,estrada
+rd. estr ,estrada
+rd estr ,estrada
+ estr ,estrada
+estrada estr ,estrada
+estr. estr ,estrada
+estr estr ,estrada
