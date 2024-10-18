@@ -6,11 +6,11 @@
 [![R-CMD-check](https://github.com/baarthur/rrais/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/baarthur/rrais/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-`{rrais}` offers a simple framework to clean an standardize data from RAIS, the Brazilian employer-employee dataset. Now you don't need to worry about layout changes across years, numbers incorrectly registered as characters, commas instead of dots, and so on!
+`{rrais}` offers a simple framework to clean and standardize data from RAIS, the Brazilian employer-employee dataset. Now you don't need to worry about layout changes across years, numbers incorrectly registered as characters, commas instead of dots, and so on!
 
 Keep in mind that this is an experimental package and please report any bugs!
 
-Note: `{rrais}` does NOT come with any sensible information. Its used is intended for researchers who were authorized by the Brazilian Ministry of Labor to use identified RAIS data, or using the public available dataset. 
+Note: `{rrais}` does NOT come with any sensible information. Its used is intended for researchers who the Brazilian Ministry of Labor authorized to use identified RAIS data, or using the public available dataset. 
 
 
 
