@@ -12,7 +12,7 @@
 #'  converted into a functional date variable, e.g. with `lubridate::dmy(x)`.
 
 date_repair <- function(x) {
-  x %>%
+  x |>
     map_chr(
       \(date)
       if(nchar(date) == 8) {
@@ -41,7 +41,7 @@ date_repair <- function(x) {
 #' @importFrom stringr str_remove str_squish str_pad
 
 clean_postcodes <- function(x) {
-  str_remove({{x}}, "-") %>% str_squish() %>% str_pad(8, "left", 0)
+  str_remove({{x}}, "-") |> str_squish() |> str_pad(8, "left", 0)
 }
 
 
@@ -59,11 +59,11 @@ clean_postcodes <- function(x) {
 #'  @export
 
 clean_rais_names <- function(x) {
-  str_conv({{x}}, "UTF8") %>%
-    str_to_lower() %>%
-    stri_trans_general("latin-ascii") %>%
-    str_remove_all("^[',\\-\\s]+") %>%
-    str_remove_all("[(){}\\[\\]\\+\\|\\\\]+") %>%
+  str_conv({{x}}, "UTF8") |>
+    str_to_lower() |>
+    stri_trans_general("latin-ascii") |>
+    str_remove_all("^[',\\-\\s]+") |>
+    str_remove_all("[(){}\\[\\]\\+\\|\\\\]+") |>
     str_replace_all("\\b0+(\\d+)", "\\1")  # Remove leading zeros
 }
 
@@ -74,6 +74,6 @@ clean_rais_names <- function(x) {
 #' Replace decimal mark for numbers read as characters
 #' @param x A `vector` of soon-to-be numbers.
 
-decimal_repair <- function(x) {str_replace(x, ",", ".") %>% as.numeric()}
+decimal_repair <- function(x) {str_replace(x, ",", ".") |> as.numeric()}
 
 

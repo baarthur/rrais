@@ -12,7 +12,6 @@ Imports:
   data.table,
   dplyr,
   lubridate,
-  magrittr,
   purrr,
   readr,
   rlang,

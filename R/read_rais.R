@@ -94,8 +94,8 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
     readRDS(system.file("extdata", "col_types_firms.RDS", package = "rrais"))
   }
 
-  coltypes <- coltypes %>%
-    filter(.data$year == !!year) %>%
+  coltypes <- coltypes |>
+    filter(.data$year == !!year) |>
     pull(col_types)
 
 
@@ -107,13 +107,13 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
     dic <- get0("dic_firms", envir = asNamespace("rrais"))
   }
 
-  dic <- dic %>%
+  dic <- dic |>
     filter(from <= year & to >= year & !str_detect(skips, as.character(year)))
 
 
   ### new names
-  renamer <- dic %>%
-    select(new_name, alias) %>%
+  renamer <- dic |>
+    select(new_name, alias) |>
     tibble::deframe()
 
 
@@ -121,9 +121,9 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
   columns <- if(is.null(columns)) {
     NULL
   } else {
-    columns <- tibble(ano = year, new_name = columns) %>%
-      left_join(dic) %>%
-      na.omit() %>%
+    columns <- tibble(ano = year, new_name = columns) |>
+      left_join(dic) |>
+      na.omit() |>
       pull(alias)
   }
 
@@ -144,7 +144,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
   ## pre-filtering
 
   ### standardize variable names
-  df <- df %>% rename(any_of(renamer))
+  df <- df |> rename(any_of(renamer))
 
 
 
@@ -172,14 +172,14 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
   ### standardize IBGE industry variable
   if(year < 2011 & "ibge_subsetor" %in% colnames(df)) {
 
-    rename_ibge <- readRDS(system.file("extdata", "rename_ibge.RDS", package = "rrais")) %>%
-      select(alias, new_name) %>%
-      mutate(new_name = as.character(new_name)) %>%
+    rename_ibge <- readRDS(system.file("extdata", "rename_ibge.RDS", package = "rrais")) |>
+      select(alias, new_name) |>
+      mutate(new_name = as.character(new_name)) |>
       tibble::deframe()
 
-    df <- df %>%
+    df <- df |>
       mutate(
-        ibge_subsetor = ibge_subsetor %>% str_remove("\\w[;\\|]") %>% str_replace_all(rename_ibge) %>% as.integer()
+        ibge_subsetor = ibge_subsetor |> str_remove("\\w[;\\|]") |> str_replace_all(rename_ibge) |> as.integer()
       )
   } else {
     df
@@ -190,10 +190,10 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
   ### standardize gender
   df <- if("genero" %in% colnames(df)) {
     if(year %in% 2005:2010) {
-      df %>%
+      df |>
         mutate(genero = as.integer(case_match(genero, "MASCULINO" ~ 1, "FEMININO" ~ 2, .default = NA)))
     } else {
-      df %>%
+      df |>
         mutate(genero = as.integer(genero))
     }
   } else {
@@ -202,11 +202,11 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
 
 
   ### characters to integers, date repair, and replace comma by dot
-  df <- df %>%
-    mutate(ano = year, .before = everything()) %>%
+  df <- df |>
+    mutate(ano = year, .before = everything()) |>
     mutate(
       across(starts_with(c("causa_", "cbo_", "dia_", "escolaridade", "genero", "ind_", "idade", "mes_", "municipio",
-                           "qtd_", "raca_cor", "tamanho", "tipo_")), \(x) str_remove_all(x, "\\D") %>% as.integer()),
+                           "qtd_", "raca_cor", "tamanho", "tipo_")), \(x) str_remove_all(x, "\\D") |> as.integer()),
       across(starts_with("data_"), date_repair),
       across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), decimal_repair)
     )
@@ -214,7 +214,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
 
   ### create age variable for years in which it was not included
   df <- if(worker_dataset & !("idade" %in% colnames(df)) & "data_de_nascimento" %in% colnames(df)) {
-    df %>% mutate(idade = year - lubridate::year(data_nascimento))
+    df |> mutate(idade = year - lubridate::year(data_nascimento))
   } else {
     df
   }
