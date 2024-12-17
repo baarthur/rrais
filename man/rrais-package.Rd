@@ -6,7 +6,7 @@
 \alias{rrais-package}
 \title{rrais: Tidy and Manipulate the Brazilian Employer-Employee Dataset}
 \description{
-What the package does (one paragraph).
+`rrais` offers a simple framework to clean and standardize data from RAIS, the Brazilian employer-employee dataset. Now you don't need to worry about layout changes across years, numbers incorrectly registered as characters, commas instead of dots, and so on!
 }
 \author{
 \strong{Maintainer}: Arthur Bazolli \email{baarthur0@outlook.com}

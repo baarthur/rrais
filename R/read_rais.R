@@ -1,49 +1,70 @@
 #' Read Establishments and Work Relationships from RAIS dataset.
 #'
-#' @param file RAIS dataset in `.csv` format.
-#' @param worker_dataset When reading establishment data, set `worker_dataset = FALSE`. Default option is to read
-#'  work relationship data (`worker_dataset = TRUE`).
+#' @inheritParams rais_to_parquet
+#' @param vinculo_ativo Should only workers that were active at the end of the year be selected?
+#'  Default is `TRUE`.
+#' @param remove_rais_negativa Should only establishments with active employees in that year  ("Rais Negativa") be selected?
+#'  Default is `TRUE`.
+#' @param fix_dates If `TRUE` (the default), corrupt dates are repaired and converted to POSIXct
+#'  format. Also creates `idade` (worker's age) variable in worker dataset for the years in which
+#'  it is not included.
+#' @param collect If `TRUE`, data is pulled into memory (defaults to `FALSE`). Read the details for
+#' more information.
 #' @param firm_filter A `vector` of firm CNPJs to use as filter, if using the identified dataset.
-#' @param muni_filter A `vector` of municipalities in 6-digit IBGE code to use as filter.
+#' @param state_filter A numeric or character `vector` of federal units in 2-digit IBGE code to use
+#' as filter.
+#' @param muni_filter A numeric or character `vector` of IBGE municipality codes to use as filter.
+#' If the 7-digit code is supplied, it will be converted to the 6-digit version.
 #' @param cep_filter A `vector` of postal codes to use as filter.
 #' @param address_filter A `vector` of addresses to use as filter for identified data up to 2010.
 #' @param street_filter A `vector` of street names to use as filter for identified data from 2011 onwards.
-#' @param delim Delimiter type. If `NULL` (the default), semicolon (;) will be used.
-#' @param year Reserved for future use.
-#' @param remove_rais_negativa Should only establishments with active employees in that year  ("Rais Negativa") be selected?
-#'  Default is `TRUE`.
-#' @param vinculo_ativo Should only workers that were active at the end of the year be selected?
-#'  Default is `TRUE`.
-#' @param columns A `vector` of variables to be selected.
 #' @param \dots Other variables passed on to `readr::read_delim()`
+#' @importFrom arrow read_parquet write_parquet
 #' @importFrom data.table as.data.table
-#' @importFrom dplyr across case_match filter left_join mutate pull rename rename_with select tibble
+#' @importFrom dplyr across case_match filter mutate rename select tibble collect
 #' @importFrom purrr map_chr
 #' @importFrom readr read_delim locale
 #' @importFrom stats na.omit
 #' @importFrom stringr str_detect str_remove str_remove_all str_replace_all
-#' @importFrom tidyselect starts_with any_of everything
+#' @importFrom tidyselect any_of everything starts_with where
 #' @returns A `data.table`
 #'
 #' @description
 #' `read_rais()` reads raw RAIS data and generates consistent variables for different years.
 #'
 #' @details
-#'  `read_rais()` first uses `readr::read_delim()` to read the .txt RAIS files. Then, it standardizes variables
-#'    across years with unified names and column types and repairs continuous values and dates, making data robust to
-#'    the various layout changes between 1985 and 2020.
+#'  `read_rais()` standardizes variables across years with unified names and column types and
+#'    repairs continuous values and dates, making data robust to the various layout changes between
+#'    1985 and 2020.
 #'
-#'    This standardization enhances data analysis, e.g. by enabling the user to stack different years in panel data
-#'    format. The multiple available filters reduces memory use, by getting rid of unnecessary data before tidying.
+#'    To make the data cleaning and filtering process faster, `read_rais()` uses
+#'    `{arrow}`'s `parquet` format. You can either supply raw RAIS .txt files, which will be passed
+#'    on to `rais_to_parquet()`, or a `.parquet` file produced by it.
 #'
-#'    Since 2011, RAIS split the address variable into three columns (street name, street number, and neighborhood).
-#'    We opted not to unify these columns, since it would imply a moderate level of arbitrariness into how we split
-#'    pre-2011 data or unify post-2011 data. If needed, use the companion `street_sweeper()` function to clean street
-#'    names following a consistent pattern, useful for geolocating or tracking firm address changes.
+#'    To make the best use of `arrow`'s structure, `read_rais()` does not pull data into memory
+#'    unless made explicit by the argument `collect = TRUE`. The final user can then decide
+#'    when to load data. More information on data querying with `arrow` can be found at
+#'    [this vignette](https://arrow.apache.org/docs/2.0/r/articles/dataset.html).
 #'
-#' @seealso [readr::read_delim()] for the arguments passed on to it and the
-#'  \href{https://www.gov.br/trabalho-e-emprego/pt-br}{Ministry of Labor and Employment (MTE)} website for
-#'  information on RAIS.
+#'    This standardization enhances data analysis, e.g. by enabling the user to stack different
+#'    years in panel data format. The multiple available filters reduces memory use, by getting rid
+#'    of unnecessary data before tidying.
+#'
+#'    Since 2011, RAIS split the address variable into three columns (street name, street number,
+#'    and neighborhood). We opted not to unify these columns, since it would imply a moderate level
+#'    of arbitrariness into how we split pre-2011 data or unify post-2011 data. If needed, use the
+#'    companion `street_sweeper()` function to clean street names following a consistent pattern,
+#'    useful for geolocating or tracking firm address changes.
+#'
+#' @seealso
+#'  * [readr::read_delim()] for the arguments passed onto it
+#'
+#'  * The [Ministry of Labor and Employment (MTE)](https://www.gov.br/trabalho-e-emprego/pt-br)
+#'    website for information on RAIS.
+#'
+#'  * [geobr::lookup_muni()] or the
+#'    [Official IBGE list](https://www.ibge.gov.br/explica/codigos-dos-municipios.php) of state
+#'    and municipality codes.
 #'
 #' @example inst/examples/read_rais.R
 #'
@@ -53,124 +74,156 @@
 
 # read_firms ----------------------------------------------------------------------------------
 
-read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_rais_negativa = TRUE,
-                       vinculo_ativo = TRUE, muni_filter = NULL,  cep_filter = NULL, address_filter = NULL,
-                       street_filter = NULL, firm_filter = NULL, delim = NULL, ...) {
+read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo_ativo = TRUE,
+                      remove_rais_negativa = TRUE, fix_dates = TRUE, collect = FALSE,
+                      state_filter = NULL, muni_filter = NULL, cep_filter = NULL,
+                      address_filter = NULL, street_filter = NULL, firm_filter = NULL,
+                      delim = NULL, ...) {
 
-  ## dealbreakers
-  if(missing(file)) {
-    stop("File was not provided.")
+
+  addr_tidy <- alias <- cbo_2002 <- cei_vinculado <- cep <- cnae_95_classe <- cnpj_cei <- NULL
+  col_types <- cpf <- data_nascimento <- dic_firms <- dic_workers <- endereco <- NULL
+  escolaridade <- from <- genero <- horas_contr <- ibge_subsetor <- ind_rais_negativa <- NULL
+  mes_desligamento <- municipio <- new_name <- nome_logradouro <- raca_cor <- skips <- NULL
+  tempo_emprego <- to <- vinculo_ativo_31_12 <- NULL
+
+
+
+  ## dealbreakers and notes
+  if(year < 2011 & !is.null(street_filter)) {
+    message("Ignoring street_filter since year < 2011. Before that year, use address_filter.")
   }
 
-  if(missing(year)) {
-    stop("Year was not determined.")
-  }
-
-
-
-  ## parameters
-  delim <- if(is.null(delim)) {
-    if(worker_dataset) {
-      ";"
-    } else {
-      ifelse(year<2010, "|", ";")
+  if(!is.null(muni_filter)) {
+    if(nchar(muni_filter) == 7) {
+      muni_filter <- str_sub(muni_filter, 1, 6)
+      message("Converting 7-digit IBGE municipality code to 6-digit code version")
     }
-  } else delim
-
-  addr_tidy <- alias <- cbo_2002 <- cei_vinculado <- cep <- cnae_95_classe <- cnpj_cei <- col_types <- NULL
-  cpf <- data_nascimento <- dic_firms <- dic_workers <- endereco <- escolaridade <- from <- genero <- NULL
-  horas_contr <- ibge_subsetor <- ind_rais_negativa <- mes_desligamento <- municipio <- new_name <- NULL
-  nome_logradouro <- raca_cor <- skips <- tempo_emprego <- to <- vinculo_ativo_31_12 <- NULL
-
-
-
-
-  ## load dictionary and column types
-
-  ### column types
-  coltypes <- if(worker_dataset) {
-    readRDS(system.file("extdata", "col_types_workers.RDS", package = "rrais"))
-  } else {
-    readRDS(system.file("extdata", "col_types_firms.RDS", package = "rrais"))
+    if(nchar(muni_filter) != 6) {
+      stop("Municipality filter must either be in 6. or 7-digit format.")
+    }
   }
 
-  coltypes <- coltypes |>
-    filter(.data$year == !!year) |>
-    pull(col_types)
+  if(!is.null(state_filter)) {
+    if(str_detect(state_filter, "[a-zA-Z]")) {
+      stop("State filter must be composed of two numbers, e.g. 31")
+    }
+    if(nchar(state_filter) != 2) {
+      stop("State filter must be in 2-digit code")
+    }
+  }
 
 
-  ### dictionary
+
+  ## load file
+  if(stringr::str_detect(file,  "parquet$")) {
+    df <- read_parquet(file, as_data_frame = FALSE)
+  } else {
+    tempfile <- tempfile()
+
+    rais_to_parquet(file = file, year = year, columns = columns, worker_dataset = worker_dataset,
+                    filename = tempfile, delim = delim, ...)
+
+    df <- read_parquet(tempfile, as_data_frame = FALSE)
+  }
+
+
+
+  ## standardize variable names
+
   if(worker_dataset) {
-    dic <- get0("dic_workers", envir = asNamespace("rrais"))
+    renamer <- get0("dic_workers", envir = asNamespace("rrais"))
   } else {
     # data("dic_firms", package = "rrais")
-    dic <- get0("dic_firms", envir = asNamespace("rrais"))
+    renamer <- get0("dic_firms", envir = asNamespace("rrais"))
   }
 
-  dic <- dic |>
-    filter(from <= year & to >= year & !str_detect(skips, as.character(year)))
-
-
-  ### new names
-  renamer <- dic |>
+  renamer <- renamer |>
+    filter(from <= year & to >= year & !str_detect(skips, as.character(year))) |>
     select(new_name, alias) |>
     tibble::deframe()
 
-
-  ### optional column selector
-  columns <- if(is.null(columns)) {
-    NULL
-  } else {
-    columns <- tibble(ano = year, new_name = columns) |>
-      left_join(dic) |>
-      na.omit() |>
-      pull(alias)
-  }
-
-
-
-  ## read raw file
-  df <- read_delim(
-    file = file,
-    delim = delim,
-    locale = locale(encoding = "ISO-8859-1", decimal_mark = ","),
-    col_select = !!columns,
-    col_types = coltypes,
-    ...
-  )
-
-
-
-  ## pre-filtering
-
-  ### standardize variable names
-  df <- df |> rename(any_of(renamer))
+  df <- df |>
+    dplyr::rename(tidyselect::any_of(renamer))
 
 
 
   ## filters
-  df <- as.data.table(df)
 
-  df <- if(!worker_dataset & remove_rais_negativa) {df[ind_rais_negativa == 0, ]} else df
-
-  if(worker_dataset) {
-    df <- df[ , vinculo_ativo_31_12 := as.numeric(vinculo_ativo_31_12)]
-    df <- if(vinculo_ativo) df[vinculo_ativo_31_12 == 1, ] else df
+  if(!worker_dataset & remove_rais_negativa) {
+    df <- df |>
+      filter(ind_rais_negativa == 0)
   }
 
+  if(worker_dataset) {
+    df <- df |>
+      mutate(vinculo_ativo_31_12 = as.integer(vinculo_ativo_31_12)) |>
+      filter(vinculo_ativo_31_12 == 1)
+  }
 
-  df <- if(is.null(firm_filter)) df else df[cnpj_cei %in% firm_filter, ]
-  df <- if(is.null(cep_filter)) df else df[cep %in% cep_filter, ]
-  df <- if(is.null(street_filter)) df else df[nome_logradouro %in% street_filter, ]
-  df <- if(is.null(address_filter)) df else df[endereco %in% address_filter, ]
-  df <- if(is.null(muni_filter)) df else df[municipio %in% muni_filter, ]
+  if(!is.null(firm_filter)) {
+    df <- df |>
+      filter(cnpj_cei %in% firm_filter)
+  }
+
+  if(!is.null(cep_filter)) {
+    df <- df |>
+      filter(cep %in% cep_filter)
+  }
+
+  if(!is.null(street_filter)) {
+    df <- df |>
+      filter(nome_logradouro %in% street_filter)
+  }
+
+  if(!is.null(address_filter)) {
+    df <- df |>
+      filter(endereco %in% address_filter)
+  }
+
+  if(!is.null(muni_filter)) {
+    df <- df |>
+      filter(municipio %in% muni_filter)
+  }
+
+    if(!is.null(state_filter)) {
+      df <- df |>
+        filter(stringr::str_sub(as.character(municipio), 1, 2) %in% state_filter)
+  }
 
 
 
   ## tidying
 
+
+  ### standardize gender
+  if("genero" %in% names(df)) {
+    if(year %in% 2005:2010) {
+      df <- df |>
+        mutate(genero = as.integer(case_match(genero, "MASCULINO" ~ 1, "FEMININO" ~ 2,
+                                              .default = NA)))
+    } else {
+      df <- df |>
+        mutate(genero = as.integer(genero))
+    }
+  }
+  return(df)
+
+
+  ### characters to integers, and replace comma by dot.
+  df <- df |>
+    mutate(year = !!year, .before = everything()) |>
+    # collect() |>
+    mutate(
+      across(starts_with(c("causa_", "cbo_", "dia_", "escolaridade", "genero", "ind_",
+                           "idade", "mes_", "municipio", "qtd_", "raca_cor", "tamanho", "tipo_")) &
+               where(is.character), ~ str_remove_all(.x, "\\D") |> as.integer()),
+      across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), decimal_repair)
+    )
+
+
   ### standardize IBGE industry variable
-  if(year < 2011 & "ibge_subsetor" %in% colnames(df)) {
+  if(year < 2011 & "ibge_subsetor" %in% names(df)) {
 
     rename_ibge <- readRDS(system.file("extdata", "rename_ibge.RDS", package = "rrais")) |>
       select(alias, new_name) |>
@@ -179,44 +232,26 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, remove_
 
     df <- df |>
       mutate(
-        ibge_subsetor = ibge_subsetor |> str_remove("\\w[;\\|]") |> str_replace_all(rename_ibge) |> as.integer()
+        ibge_subsetor = as.integer(ibge_subsetor |> str_remove("\\w[;\\|]") |>
+                                     str_replace_all(rename_ibge))
       )
-  } else {
-    df
   }
 
 
+  ### date repair
+  if(fix_dates) {
+    df <- df |>
+      mutate(across(starts_with("data_"), date_repair))
 
-  ### standardize gender
-  df <- if("genero" %in% colnames(df)) {
-    if(year %in% 2005:2010) {
-      df |>
-        mutate(genero = as.integer(case_match(genero, "MASCULINO" ~ 1, "FEMININO" ~ 2, .default = NA)))
-    } else {
-      df |>
-        mutate(genero = as.integer(genero))
+    #### create age variable for years in which it was not included
+    if(worker_dataset & !("idade" %in% names(df)) & "data_de_nascimento" %in% names(df)) {
+      df <- df |> mutate(idade = year - lubridate::year(data_nascimento))
     }
-  } else {
-    df
   }
 
-
-  ### characters to integers, date repair, and replace comma by dot
-  df <- df |>
-    mutate(ano = year, .before = everything()) |>
-    mutate(
-      across(starts_with(c("causa_", "cbo_", "dia_", "escolaridade", "genero", "ind_", "idade", "mes_", "municipio",
-                           "qtd_", "raca_cor", "tamanho", "tipo_")), \(x) str_remove_all(x, "\\D") |> as.integer()),
-      across(starts_with("data_"), date_repair),
-      across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), decimal_repair)
-    )
-
-
-  ### create age variable for years in which it was not included
-  df <- if(worker_dataset & !("idade" %in% colnames(df)) & "data_de_nascimento" %in% colnames(df)) {
-    df |> mutate(idade = year - lubridate::year(data_nascimento))
-  } else {
-    df
-  }
-
+  if(collect) {
+    collect(df)
+  } else
+    return(df)
 }
+

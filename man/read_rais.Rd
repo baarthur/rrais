@@ -9,8 +9,11 @@ read_rais(
   year,
   worker_dataset = TRUE,
   columns = NULL,
-  remove_rais_negativa = TRUE,
   vinculo_ativo = TRUE,
+  remove_rais_negativa = TRUE,
+  fix_dates = TRUE,
+  collect = FALSE,
+  state_filter = NULL,
   muni_filter = NULL,
   cep_filter = NULL,
   address_filter = NULL,
@@ -21,22 +24,34 @@ read_rais(
 )
 }
 \arguments{
-\item{file}{RAIS dataset in \code{.csv} format.}
+\item{file}{RAIS dataset in \code{.txt} format.}
 
-\item{year}{Reserved for future use.}
+\item{year}{Fiscal year of the file, necessary to determine column types, which
+columns to read, and other time-specific tidying.}
 
-\item{worker_dataset}{When reading establishment data, set \code{worker_dataset = FALSE}. Default option is to read
-work relationship data (\code{worker_dataset = TRUE}).}
+\item{worker_dataset}{When reading establishment data, set \code{worker_dataset = FALSE}. Default
+option is to read work relationship data (\code{worker_dataset = TRUE}).}
 
-\item{columns}{A \code{vector} of variables to be selected.}
-
-\item{remove_rais_negativa}{Should only establishments with active employees in that year  ("Rais Negativa") be selected?
-Default is \code{TRUE}.}
+\item{columns}{A \code{vector} of variables to read.}
 
 \item{vinculo_ativo}{Should only workers that were active at the end of the year be selected?
 Default is \code{TRUE}.}
 
-\item{muni_filter}{A \code{vector} of municipalities in 6-digit IBGE code to use as filter.}
+\item{remove_rais_negativa}{Should only establishments with active employees in that year  ("Rais Negativa") be selected?
+Default is \code{TRUE}.}
+
+\item{fix_dates}{If \code{TRUE} (the default), corrupt dates are repaired and converted to POSIXct
+format. Also creates \code{idade} (worker's age) variable in worker dataset for the years in which
+it is not included.}
+
+\item{collect}{If \code{TRUE}, data is pulled into memory (defaults to \code{FALSE}). Read the details for
+more information.}
+
+\item{state_filter}{A numeric or character \code{vector} of federal units in 2-digit IBGE code to use
+as filter.}
+
+\item{muni_filter}{A numeric or character \code{vector} of IBGE municipality codes to use as filter.
+If the 7-digit code is supplied, it will be converted to the 6-digit version.}
 
 \item{cep_filter}{A \code{vector} of postal codes to use as filter.}
 
@@ -57,45 +72,64 @@ A \code{data.table}
 \code{read_rais()} reads raw RAIS data and generates consistent variables for different years.
 }
 \details{
-\code{read_rais()} first uses \code{readr::read_delim()} to read the .txt RAIS files. Then, it standardizes variables
-across years with unified names and column types and repairs continuous values and dates, making data robust to
-the various layout changes between 1985 and 2020.
+\code{read_rais()} standardizes variables across years with unified names and column types and
+repairs continuous values and dates, making data robust to the various layout changes between
+1985 and 2020.
 
-This standardization enhances data analysis, e.g. by enabling the user to stack different years in panel data
-format. The multiple available filters reduces memory use, by getting rid of unnecessary data before tidying.
+To make the data cleaning and filtering process faster, \code{read_rais()} uses
+\code{{arrow}}'s \code{parquet} format. You can either supply raw RAIS .txt files, which will be passed
+on to \code{rais_to_parquet()}, or a \code{.parquet} file produced by it.
 
-Since 2011, RAIS split the address variable into three columns (street name, street number, and neighborhood).
-We opted not to unify these columns, since it would imply a moderate level of arbitrariness into how we split
-pre-2011 data or unify post-2011 data. If needed, use the companion \code{street_sweeper()} function to clean street
-names following a consistent pattern, useful for geolocating or tracking firm address changes.
+To make the best use of \code{arrow}'s structure, \code{read_rais()} does not pull data into memory
+unless made explicit by the argument \code{collect = TRUE}. The final user can then decide
+when to load data. More information on data querying with \code{arrow} can be found at
+\href{https://arrow.apache.org/docs/2.0/r/articles/dataset.html}{this vignette}.
+
+This standardization enhances data analysis, e.g. by enabling the user to stack different
+years in panel data format. The multiple available filters reduces memory use, by getting rid
+of unnecessary data before tidying.
+
+Since 2011, RAIS split the address variable into three columns (street name, street number,
+and neighborhood). We opted not to unify these columns, since it would imply a moderate level
+of arbitrariness into how we split pre-2011 data or unify post-2011 data. If needed, use the
+companion \code{street_sweeper()} function to clean street names following a consistent pattern,
+useful for geolocating or tracking firm address changes.
 }
 \examples{
 # read_rais example
 \dontrun{
   library(rrais)
 
-  # simplest use: provide file and year
-
+  # simplest use: provide raw file and year
   path <- "path/to/rais_firms.txt"
 
   df <- read_rais(file = path, year = 2003, worker_dataset = FALSE)
 
+  # using a ".parquet" file
+  df <- read_rais("path/to/rais_workers.parquet", year = 2019)
 
-  # filter for a vector of cities in IBGE-6 format
+  # filter a vector of cities
   cities <- c(355030, 310620, 320530)
   df <- read_rais(path, 2013, muni_filter = cities, worker_dataset = FALSE)
 
-
   # select a set of columns
-  ## data("dic_firms") # optional: lookup variable names
+  # data("dic_firms") # optional: lookup variable names
   cols <- c("cbo_94", "cbo_2002", "genero", "rem_med", "vinculo_ativo_31_12")
 
   df <- read_rais("path/to/rais_worker.txt", 2015, columns = cols, n_max = 10)
 
+  # to load data directly into column, simply determine `collect = TRUE`
+  df <- read_rais(path, year = 2014, collect = TRUE)
+
 }
 }
 \seealso{
-\code{\link[readr:read_delim]{readr::read_delim()}} for the arguments passed on to it and the
-\href{https://www.gov.br/trabalho-e-emprego/pt-br}{Ministry of Labor and Employment (MTE)} website for
-information on RAIS.
+\itemize{
+\item \code{\link[readr:read_delim]{readr::read_delim()}} for the arguments passed onto it
+\item The \href{https://www.gov.br/trabalho-e-emprego/pt-br}{Ministry of Labor and Employment (MTE)}
+website for information on RAIS.
+\item \code{\link[geobr:lookup_muni]{geobr::lookup_muni()}} or the
+\href{https://www.ibge.gov.br/explica/codigos-dos-municipios.php}{Official IBGE list} of state
+and municipality codes.
+}
 }
