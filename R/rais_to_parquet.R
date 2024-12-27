@@ -13,6 +13,7 @@
 #' @importFrom dplyr filter left_join pull
 #' @importFrom readr read_delim locale
 #' @importFrom tibble tibble
+#' @export
 
 rais_to_parquet <- function(file, year, columns = NULL, worker_dataset = TRUE, filename,
                             delim = NULL, ...) {
