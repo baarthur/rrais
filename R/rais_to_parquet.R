@@ -70,7 +70,7 @@ rais_to_parquet <- function(file, year, columns = NULL, worker_dataset = TRUE, f
     NULL
   } else {
     columns <- tibble(ano = year, new_name = columns) |>
-      left_join(dic) |>
+      left_join(dic, by = "new_name") |>
       na.omit() |>
       pull(alias)
   }
