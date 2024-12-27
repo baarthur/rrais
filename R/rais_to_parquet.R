@@ -77,6 +77,7 @@ rais_to_parquet <- function(file, year, columns = NULL, worker_dataset = TRUE, f
 
 
   ## read raw file
+  print(paste0("Reading raw file for year ", year))
   read_delim(
     file = file,
     delim = delim,

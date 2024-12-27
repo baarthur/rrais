@@ -1,6 +1,7 @@
 #' Read Establishments and Work Relationships from RAIS dataset.
 #'
 #' @inheritParams rais_to_parquet
+#' @param file RAIS dataset, either in `.txt` or `.parquet` format.
 #' @param vinculo_ativo Should only workers that were active at the end of the year be selected?
 #'  Default is `TRUE`.
 #' @param remove_rais_negativa Should only establishments with active employees in that year  ("Rais Negativa") be selected?
@@ -151,14 +152,26 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   ## filters
 
   if(!worker_dataset & remove_rais_negativa) {
-    df <- df |>
-      filter(ind_rais_negativa == 0)
+    if("ind_rais_negativa" %in% names(df)) {
+      df <- df |>
+        filter(ind_rais_negativa == 0)
+    } else {
+      stop(paste("Can't remove inactive firms since the indicator column is absent from data.",
+                 "Tip: if you used the `columns` specification, make sure that you",
+                 "included `ind_rais_negativa`."))
+    }
   }
 
-  if(worker_dataset) {
-    df <- df |>
-      mutate(vinculo_ativo_31_12 = as.integer(vinculo_ativo_31_12)) |>
-      filter(vinculo_ativo_31_12 == 1)
+  if(worker_dataset & vinculo_ativo) {
+    if("vinculo_ativo_31_12" %in% names(df)) {
+      df <- df |>
+        mutate(vinculo_ativo_31_12 = as.integer(vinculo_ativo_31_12)) |>
+        filter(vinculo_ativo_31_12 == 1)
+    } else {
+      stop(paste("Can't select active workers since the indicator column is absent from data.",
+                 "Tip: if you used the `columns` specification, make sure that you",
+                 "included `vinculo_ativo_31_12`."))
+    }
   }
 
   if(!is.null(firm_filter)) {
