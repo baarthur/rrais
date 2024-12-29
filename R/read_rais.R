@@ -96,11 +96,11 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   }
 
   if(!is.null(muni_filter)) {
-    if(nchar(muni_filter) == 7) {
+    if(any(nchar(muni_filter) == 7)) {
       muni_filter <- str_sub(muni_filter, 1, 6)
       message("Converting 7-digit IBGE municipality code to 6-digit code version")
     }
-    if(nchar(muni_filter) != 6) {
+    if(any(nchar(muni_filter) != 6)) {
       stop("Municipality filter must either be in 6. or 7-digit format.")
     }
   }
@@ -109,7 +109,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
     if(str_detect(state_filter, "[a-zA-Z]")) {
       stop("State filter must be composed of two numbers, e.g. 31")
     }
-    if(nchar(state_filter) != 2) {
+    if(any(nchar(state_filter) != 2)) {
       stop("State filter must be in 2-digit code")
     }
   }
