@@ -220,14 +220,15 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
     if(!is.null(state_filter)) {
       df <- df |>
         filter(stringr::str_sub(as.character(municipio), 1, 2) %in% state_filter)
-  }
+    }
 
 
 
   ## tidying
 
   ### standardize gender
-  if("genero" %in% names(df)) {
+  if("genero" %in% names(df) & !is.integer(pull(df, genero))) {
+
     if(year %in% 2005:2010) {
       df <- df |>
         mutate(genero = as.integer(case_match(genero, "MASCULINO" ~ 1, "FEMININO" ~ 2,
