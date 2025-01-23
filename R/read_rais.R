@@ -89,6 +89,16 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   tempo_emprego <- to <- vinculo_ativo_31_12 <- NULL
 
 
+  ## things that arrow make me do
+  arrow::register_scalar_function(
+      "decimal_repair",
+      function(context, x) {decimal_repair(x)},
+      in_type = arrow::string(),
+      out_type = arrow::float32(),
+      auto_convert = TRUE
+    )
+
+
 
   ## dealbreakers and notes
   if(year < 2011 & !is.null(street_filter)) {
@@ -172,16 +182,12 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
     }
   }
 
-  if(worker_dataset & "vinculo_ativo_31_12" %in% names(df)) {
+  if(worker_dataset & "vinculo_ativo_31_12" %in% names(df) &
+     !is.integer(df |> slice_head(n = 1) |> collect() |> pull(vinculo_ativo_31_12))) {
+
     df <- df |>
-      mutate(
-        vinculo_ativo_31_12 = ifelse(
-          is.integer(vinculo_ativo_31_12)),
-        vinculo_ativo_31_12,
-        str_remove_all(vinculo_ativo_31_12, "\\s"
-        ) |>
-          as.integer()
-      )
+      mutate(vinculo_ativo_31_12 = str_remove_all(vinculo_ativo_31_12, "\\s") |> as.integer())
+
     if(vinculo_ativo) {
       df <- df |>
         filter(vinculo_ativo_31_12 == 1)

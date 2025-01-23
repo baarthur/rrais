@@ -72,13 +72,15 @@ clean_rais_names <- function(x) {
 # decimal_repair --------------------------------------------------------------------------------------------------
 
 #' Replace decimal mark for numbers read as characters
-#' @name decimal_repair
+# @name decimal_repair
 #' @param x A `vector` of soon-to-be numbers.
 
-arrow::register_scalar_function(
-  "decimal_repair",
-  function(context, x) {str_replace(x, ",", ".") |> as.numeric()},
-  in_type = arrow::string(),
-  out_type = arrow::float32(),
-  auto_convert = TRUE
-)
+decimal_repair <- function(x) {str_replace(x, ",", ".") |> as.numeric()}
+
+# arrow::register_scalar_function(
+#   "decimal_repair",
+#   function(context, x) {str_replace(x, ",", ".") |> as.numeric()},
+#   in_type = arrow::string(),
+#   out_type = arrow::float32(),
+#   auto_convert = TRUE
+# )
