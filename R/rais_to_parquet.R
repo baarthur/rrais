@@ -66,11 +66,11 @@ rais_to_parquet <- function(file, year, columns = NULL, worker_dataset = TRUE, f
     filter(from <= year & to >= year & !str_detect(skips, as.character(year)))
 
   ### optional column selector
-  columns <- if(is.null(columns)) {
+  columns_raw <- if(is.null(columns)) {
     NULL
   } else {
-    columns <- tibble(ano = year, new_name = columns) |>
-      left_join(dic, by = "new_name") |>
+    tibble(new_name = columns) |>
+      left_join(dic, by = c("new_name")) |>
       na.omit() |>
       pull(alias)
   }
@@ -82,7 +82,7 @@ rais_to_parquet <- function(file, year, columns = NULL, worker_dataset = TRUE, f
     file = file,
     delim = delim,
     locale = locale(encoding = "ISO-8859-1", decimal_mark = ","),
-    col_select = !!columns,
+    col_select = !!columns_raw,
     col_types = coltypes,
     ...
   ) |>

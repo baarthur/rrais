@@ -26,7 +26,7 @@
 #' @importFrom purrr map_chr
 #' @importFrom readr read_delim locale
 #' @importFrom stats na.omit
-#' @importFrom stringr str_detect str_remove str_remove_all str_replace_all
+#' @importFrom stringr str_detect str_extract str_remove str_remove_all str_replace_all
 #' @importFrom tidyselect any_of everything starts_with where
 #' @returns A `data.table`
 #'
@@ -116,20 +116,6 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
 
 
 
-  ## load file
-  if(stringr::str_detect(file,  "parquet$")) {
-    df <- read_parquet(file, as_data_frame = FALSE)
-  } else {
-    tempfile <- tempfile()
-
-    rais_to_parquet(file = file, year = year, columns = columns, worker_dataset = worker_dataset,
-                    filename = tempfile, delim = delim, ...)
-
-    df <- read_parquet(tempfile, as_data_frame = FALSE)
-  }
-
-
-
   ## standardize variable names
 
   if(worker_dataset) {
@@ -141,8 +127,32 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
 
   renamer <- renamer |>
     filter(from <= year & to >= year & !str_detect(skips, as.character(year))) |>
-    select(new_name, alias) |>
-    tibble::deframe()
+    select(new_name, alias)
+
+  ### optional column selector
+  columns_raw <- if(is.null(columns)) {
+    pull(renamer, alias)
+  } else {
+    tibble(new_name = columns) |>
+      left_join(renamer, by = c("new_name")) |>
+      na.omit() |>
+      pull(alias)
+  }
+
+  renamer <- tibble::deframe(renamer)
+
+
+  ## load file
+  if(stringr::str_detect(file,  "parquet$")) {
+    df <- read_parquet(file, as_data_frame = FALSE, col_select = any_of(columns_raw))
+  } else {
+    tempfile <- tempfile()
+
+    rais_to_parquet(file = file, year = year, columns = columns_raw,
+                    worker_dataset = worker_dataset, filename = tempfile, delim = delim, ...)
+
+    df <- read_parquet(tempfile, as_data_frame = FALSE)
+  }
 
   df <- df |>
     dplyr::rename(tidyselect::any_of(renamer))
@@ -165,7 +175,8 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   if(worker_dataset & vinculo_ativo) {
     if("vinculo_ativo_31_12" %in% names(df)) {
       df <- df |>
-        mutate(vinculo_ativo_31_12 = as.integer(vinculo_ativo_31_12)) |>
+        mutate(vinculo_ativo_31_12 = str_remove_all(vinculo_ativo_31_12, "\\s")
+               |> as.integer()) |>
         filter(vinculo_ativo_31_12 == 1)
     } else {
       stop(paste("Can't select active workers since the indicator column is absent from data.",
@@ -196,7 +207,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
 
   if(!is.null(muni_filter)) {
     df <- df |>
-      filter(municipio %in% muni_filter)
+      inner_join(tibble(municipio = muni_filter))
   }
 
     if(!is.null(state_filter)) {
@@ -208,7 +219,6 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
 
   ## tidying
 
-
   ### standardize gender
   if("genero" %in% names(df)) {
     if(year %in% 2005:2010) {
@@ -217,10 +227,9 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
                                               .default = NA)))
     } else {
       df <- df |>
-        mutate(genero = as.integer(genero))
+        mutate(genero = as.integer(str_trim(genero)))
     }
   }
-  return(df)
 
 
   ### characters to integers, and replace comma by dot.

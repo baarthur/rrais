@@ -36,7 +36,7 @@ date_repair <- function(x) {
 # clean_postcodes -------------------------------------------------------------------------------------------------
 
 #' Clean postcodes
-#' Standardize Brazilian postal codes (CEP) to 8-digit, all-numeric format.
+#' @description Standardize Brazilian postal codes (CEP) to 8-digit, all-numeric format.
 #' @param x A `vector` or data column of `character` class.
 #' @importFrom stringr str_remove str_squish str_pad
 
@@ -49,7 +49,7 @@ clean_postcodes <- function(x) {
 # clean_rais_names ------------------------------------------------------------------------------------------------
 
 #' Clean character vectors
-#' Removes any diacritics present on strings, extra spaces, leading zeroes, and converts them to lowercase.
+#' @description Removes any diacritics present on strings, extra spaces, leading zeroes, and converts them to lowercase.
 #' @inheritParams clean_postcodes
 #' @importFrom stringi stri_trans_general
 #' @importFrom stringr str_conv str_remove_all str_replace_all str_to_lower
@@ -63,7 +63,7 @@ clean_rais_names <- function(x) {
     str_to_lower() |>
     stri_trans_general("latin-ascii") |>
     str_remove_all("^[',\\-\\s]+") |>
-    str_remove_all("[(){}\\[\\]\\+\\|\\\\]+") |>
+    str_remove_all("[(){}\\[\\]\\+\\|\\?\\*\\\\]+") |>
     str_replace_all("\\b0+(\\d+)", "\\1")  # Remove leading zeros
 }
 
@@ -74,6 +74,10 @@ clean_rais_names <- function(x) {
 #' Replace decimal mark for numbers read as characters
 #' @param x A `vector` of soon-to-be numbers.
 
-decimal_repair <- function(x) {str_replace(x, ",", ".") |> as.numeric()}
-
-
+arrow::register_scalar_function(
+  "decimal_repair",
+  function(context, x) {str_replace(x, ",", ".") |> as.numeric()},
+  in_type = arrow::string(),
+  out_type = arrow::float32(),
+  auto_convert = TRUE
+)

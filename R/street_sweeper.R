@@ -29,9 +29,11 @@ street_sweeper <- function(df, addr, split = TRUE, keep_original = TRUE) {
   addr_full <- addr_name <- addr_number <- addr_other <- addr_type <- alias <- name_number <- NULL
   nocaps <- true_name <- NULL
 
-  typos <- read_delim(system.file("extdata", "addr_typos.csv", package = "rrais"))
+  typos <- system.file("extdata", "addr_typos.csv", package = "rrais") |>
+    read_delim(show_col_types = F)
 
   df <- df |>
+    collect() |>
     mutate(nocaps = clean_rais_names({{addr}})) |>
     mutate(
       alias = str_extract(nocaps, paste0(paste0("\\b", typos$alias, "\\b"), collapse = "|")) |>
@@ -60,11 +62,10 @@ street_sweeper <- function(df, addr, split = TRUE, keep_original = TRUE) {
           str_extract(name_number, "^[\\d?\\-\\w]+.*?(\\d|(s[?/?\\.n]))") |>
           str_remove("(\\d|(s[?/?\\.n]))$"),
         .default = name_number
-      ),
+      ) |> replace_na(""),
       addr_number = str_remove(name_number, addr_name),
       addr_other = str_replace(addr_number, "^(\\d+|(s[?/?\\.]?n))", "") |> str_trim()
     )
-
 
   df <- df |>
     mutate(
@@ -72,7 +73,7 @@ street_sweeper <- function(df, addr, split = TRUE, keep_original = TRUE) {
       addr_other = ifelse(addr_other == "", NA, addr_other),
       addr_name = str_trim(addr_name) |> str_remove(",|\\."),
       addr_number = ifelse(is.na(addr_other), addr_number, str_remove(addr_number, addr_other)) |>
-        str_remove_all("[^a-zA-Z0-9]+") |> str_trim()
+        str_trim()
     )
 
   df <- df |>
