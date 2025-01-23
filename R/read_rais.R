@@ -22,7 +22,7 @@
 #' @param \dots Other variables passed on to `readr::read_delim()`
 #' @importFrom arrow read_parquet write_parquet
 #' @importFrom data.table as.data.table
-#' @importFrom dplyr across case_match filter mutate rename select tibble collect
+#' @importFrom dplyr across case_match filter inner_join mutate rename select slice_head tibble collect
 #' @importFrom purrr map_chr
 #' @importFrom readr read_delim locale
 #' @importFrom stats na.omit
@@ -227,7 +227,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   ## tidying
 
   ### standardize gender
-  if("genero" %in% names(df) & !is.integer(pull(df, genero))) {
+  if("genero" %in% names(df) & !is.integer(df |> slice_head(n = 1) |> collect() |> pull(genero))) {
 
     if(year %in% 2005:2010) {
       df <- df |>
@@ -248,7 +248,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
       across(starts_with(c("causa_", "cbo_", "dia_", "escolaridade", "genero", "ind_",
                            "idade", "mes_", "municipio", "qtd_", "raca_cor", "tamanho", "tipo_")) &
                where(is.character), ~ str_remove_all(.x, "\\D") |> as.integer()),
-      across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), decimal_repair)
+      across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), ~decimal_repair(.x))
     )
 
 

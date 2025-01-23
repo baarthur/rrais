@@ -2,8 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{clean_rais_names}
 \alias{clean_rais_names}
-\title{Clean character vectors
-Removes any diacritics present on strings, extra spaces, leading zeroes, and converts them to lowercase.}
+\title{Clean character vectors}
 \usage{
 clean_rais_names(x)
 }
@@ -11,7 +10,6 @@ clean_rais_names(x)
 \item{x}{A \code{vector} or data column of \code{character} class.}
 }
 \description{
-Clean character vectors
 Removes any diacritics present on strings, extra spaces, leading zeroes, and converts them to lowercase.
 }
 \details{

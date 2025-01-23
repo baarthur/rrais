@@ -72,6 +72,7 @@ clean_rais_names <- function(x) {
 # decimal_repair --------------------------------------------------------------------------------------------------
 
 #' Replace decimal mark for numbers read as characters
+#' @name decimal_repair
 #' @param x A `vector` of soon-to-be numbers.
 
 arrow::register_scalar_function(

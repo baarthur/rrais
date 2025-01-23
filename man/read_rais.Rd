@@ -24,7 +24,7 @@ read_rais(
 )
 }
 \arguments{
-\item{file}{RAIS dataset in \code{.txt} format.}
+\item{file}{RAIS dataset, either in \code{.txt} or \code{.parquet} format.}
 
 \item{year}{Fiscal year of the file, necessary to determine column types, which
 columns to read, and other time-specific tidying.}
