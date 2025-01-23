@@ -172,11 +172,18 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
     }
   }
 
-  if(worker_dataset & vinculo_ativo) {
-    if("vinculo_ativo_31_12" %in% names(df)) {
+  if(worker_dataset & "vinculo_ativo_31_12" %in% names(df)) {
+    df <- df |>
+      mutate(
+        vinculo_ativo_31_12 = ifelse(
+          is.integer(vinculo_ativo_31_12)),
+        vinculo_ativo_31_12,
+        str_remove_all(vinculo_ativo_31_12, "\\s"
+        ) |>
+          as.integer()
+      )
+    if(vinculo_ativo) {
       df <- df |>
-        mutate(vinculo_ativo_31_12 = str_remove_all(vinculo_ativo_31_12, "\\s")
-               |> as.integer()) |>
         filter(vinculo_ativo_31_12 == 1)
     } else {
       stop(paste("Can't select active workers since the indicator column is absent from data.",
