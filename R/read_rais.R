@@ -187,22 +187,22 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
 
   if(!is.null(firm_filter)) {
     df <- df |>
-      filter(cnpj_cei %in% firm_filter)
+      inner_join(tibble(cnpj_cei = firm_filter))
   }
 
   if(!is.null(cep_filter)) {
     df <- df |>
-      filter(cep %in% cep_filter)
+      inner_join(tibble(cep = cep_filter))
   }
 
   if(!is.null(street_filter)) {
     df <- df |>
-      filter(nome_logradouro %in% street_filter)
+      inner_join(tibble(nome_logradouro = street_filter))
   }
 
   if(!is.null(address_filter)) {
     df <- df |>
-      filter(endereco %in% address_filter)
+      inner_join(tibble(endereco = address_filter))
   }
 
   if(!is.null(muni_filter)) {
