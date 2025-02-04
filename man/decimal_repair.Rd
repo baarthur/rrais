@@ -3,6 +3,9 @@
 \name{decimal_repair}
 \alias{decimal_repair}
 \title{Replace decimal mark for numbers read as characters}
+\usage{
+decimal_repair(x)
+}
 \arguments{
 \item{x}{A \code{vector} of soon-to-be numbers.}
 }

@@ -82,7 +82,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
                       delim = NULL, ...) {
 
 
-  addr_tidy <- alias <- cbo_2002 <- cei_vinculado <- cep <- cnae_95_classe <- cnpj_cei <- NULL
+  addr_tidy <- alias <- cbo_2002 <- cei_vinculado <- cep <- cnpj_cei <- NULL
   col_types <- cpf <- data_nascimento <- dic_firms <- dic_workers <- endereco <- NULL
   escolaridade <- from <- genero <- horas_contr <- ibge_subsetor <- ind_rais_negativa <- NULL
   mes_desligamento <- municipio <- new_name <- nome_logradouro <- raca_cor <- skips <- NULL
@@ -167,36 +167,44 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   df <- df |>
     dplyr::rename(tidyselect::any_of(renamer))
 
+  ## first things first: identifiers as double
+  df <- df |>
+    mutate(across(starts_with(c("cnpj", "cei_", "cpf_", "ctps", "pis")), as.double))
+
 
 
   ## filters
 
-  if(!worker_dataset & remove_rais_negativa) {
-    if("ind_rais_negativa" %in% names(df)) {
-      df <- df |>
-        filter(ind_rais_negativa == 0)
-    } else {
-      stop(paste("Can't remove inactive firms since the indicator column is absent from data.",
-                 "Tip: if you used the `columns` specification, make sure that you",
-                 "included `ind_rais_negativa`."))
+    if(!worker_dataset & remove_rais_negativa) {
+      if("ind_rais_negativa" %in% names(df)) {
+        df <- df |>
+          filter(ind_rais_negativa == 0)
+      } else {
+        stop(paste("Can't remove inactive firms since the indicator column is absent from data.",
+                   "Tip: if you used the `columns` specification, make sure that you",
+                   "included `ind_rais_negativa`."))
+      }
     }
-  }
 
-  if(worker_dataset & "vinculo_ativo_31_12" %in% names(df) &
-     !is.integer(df |> slice_head(n = 1) |> collect() |> pull(vinculo_ativo_31_12))) {
-
-    df <- df |>
-      mutate(vinculo_ativo_31_12 = str_remove_all(vinculo_ativo_31_12, "\\s") |> as.integer())
+  if(worker_dataset) {
+    if("vinculo_ativo_31_12" %in% names(df) &
+       !is.integer(df |> slice_head(n = 1) |> collect() |> pull(vinculo_ativo_31_12))) {
+      df <- df |>
+        mutate(vinculo_ativo_31_12 = str_remove_all(vinculo_ativo_31_12, "\\s") |> as.integer())
+    }
 
     if(vinculo_ativo) {
-      df <- df |>
-        filter(vinculo_ativo_31_12 == 1)
-    } else {
-      stop(paste("Can't select active workers since the indicator column is absent from data.",
-                 "Tip: if you used the `columns` specification, make sure that you",
-                 "included `vinculo_ativo_31_12`."))
+      if("vinculo_ativo_31_12" %in% names(df)) {
+        df <- df |>
+          filter(vinculo_ativo_31_12 == 1)
+      } else {
+        stop(paste("Can't select active workers since the indicator column is absent from data.",
+                   "Tip: if you used the `columns` specification, make sure that you included",
+                   "`vinculo_ativo_31_12`."))
+      }
     }
   }
+
 
   if(!is.null(firm_filter)) {
     df <- df |>
@@ -233,15 +241,17 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   ## tidying
 
   ### standardize gender
-  if("genero" %in% names(df) & !is.integer(df |> slice_head(n = 1) |> collect() |> pull(genero))) {
+  if("genero" %in% names(df)) {
+    if(!is.integer(df |> slice_head(n = 1) |> collect() |> pull(genero))) {
 
-    if(year %in% 2005:2010) {
-      df <- df |>
-        mutate(genero = as.integer(case_match(genero, "MASCULINO" ~ 1, "FEMININO" ~ 2,
-                                              .default = NA)))
-    } else {
-      df <- df |>
-        mutate(genero = as.integer(str_trim(genero)))
+      if(year %in% 2005:2010) {
+        df <- df |>
+          mutate(genero = ifelse(genero == "MASCULINO", "1", ifelse(genero == "FEMININO", "2", "")
+          ) |> as.integer())
+      } else {
+        df <- df |>
+          mutate(genero = as.integer(str_trim(genero)))
+      }
     }
   }
 
@@ -251,7 +261,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
     mutate(year = !!year, .before = everything()) |>
     # collect() |>
     mutate(
-      across(starts_with(c("causa_", "cbo_", "dia_", "escolaridade", "genero", "ind_",
+      across(starts_with(c("causa_", "cbo_", "cnae_", "dia_", "escolaridade", "genero", "ind_",
                            "idade", "mes_", "municipio", "qtd_", "raca_cor", "tamanho", "tipo_")) &
                where(is.character), ~ str_remove_all(.x, "\\D") |> as.integer()),
       across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), ~decimal_repair(.x))
