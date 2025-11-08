@@ -108,10 +108,10 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   if(!is.null(muni_filter)) {
     if(any(nchar(muni_filter) == 7)) {
       muni_filter <- str_sub(muni_filter, 1, 6)
-      message("Converting 7-digit IBGE municipality code to 6-digit code version")
+      message("Converting 7-digit IBGE municipality code to 6-digit version")
     }
     if(any(nchar(muni_filter) != 6)) {
-      stop("Municipality filter must either be in 6. or 7-digit format.")
+      stop("Municipality filter must be either in 6- or 7-digit format.")
     }
   }
 
@@ -156,42 +156,37 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   if(stringr::str_detect(file,  "parquet$")) {
     df <- read_parquet(file, as_data_frame = FALSE, col_select = any_of(columns_raw))
   } else {
-    tempfile <- tempfile()
-
-    rais_to_parquet(file = file, year = year, columns = columns_raw,
-                    worker_dataset = worker_dataset, filename = tempfile, delim = delim, ...)
-
-    df <- read_parquet(tempfile, as_data_frame = FALSE)
+    df <- rais_to_parquet(file = file, year = year, columns = columns_raw,
+                          worker_dataset = worker_dataset, filename = tempfile, delim = delim, ...)
   }
 
   df <- df |>
     dplyr::rename(tidyselect::any_of(renamer))
 
-  ## first things first: identifiers as double
-  df <- df |>
-    mutate(across(starts_with(c("cnpj", "cei_", "cpf_", "ctps", "pis")), as.double))
+  # ## remove me: IDENTIFIERS ARE CHARACTERS!!!!!
+  # df <- df |>
+  #   mutate(across(starts_with(c("cnpj", "cei_", "cpf_", "ctps", "pis")), as.double))
 
 
 
   ## filters
-
-    if(!worker_dataset & remove_rais_negativa) {
-      if("ind_rais_negativa" %in% names(df)) {
-        df <- df |>
-          filter(ind_rais_negativa == 0)
-      } else {
-        stop(paste("Can't remove inactive firms since the indicator column is absent from data.",
-                   "Tip: if you used the `columns` specification, make sure that you",
-                   "included `ind_rais_negativa`."))
-      }
+  if(!worker_dataset & remove_rais_negativa) {
+    if("ind_rais_negativa" %in% names(df)) {
+      df <- df |>
+        filter(ind_rais_negativa == 0)
+    } else {
+      stop(paste("Can't remove inactive firms since the indicator column is absent from data.",
+                 "Tip: if you used the `columns` specification, make sure that you",
+                 "included `ind_rais_negativa`."))
     }
+  }
 
   if(worker_dataset) {
     if("vinculo_ativo_31_12" %in% names(df) &
        !is.integer(df |> slice_head(n = 1) |> collect() |> pull(vinculo_ativo_31_12))) {
       df <- df |>
         mutate(vinculo_ativo_31_12 = str_remove_all(vinculo_ativo_31_12, "\\s") |> as.integer())
-    }
+  }
 
     if(vinculo_ativo) {
       if("vinculo_ativo_31_12" %in% names(df)) {
@@ -231,10 +226,12 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
       inner_join(tibble(municipio = muni_filter))
   }
 
-    if(!is.null(state_filter)) {
-      df <- df |>
-        filter(stringr::str_sub(as.character(municipio), 1, 2) %in% state_filter)
-    }
+  if(!is.null(state_filter)) {
+    df <- df |>
+      filter(stringr::str_sub(as.character(municipio), 1, 2) %in% state_filter)
+  }
+
+
 
 
 
@@ -242,8 +239,14 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
 
   ### standardize gender
   if("genero" %in% names(df)) {
-    if(!is.integer(df |> slice_head(n = 1) |> collect() |> pull(genero))) {
 
+    gender_int <- df |>
+      slice_head(n = 1) |>
+      collect() |>
+      pull(genero) |>
+      is.integer()
+
+    if(!gender_int) {
       if(year %in% 2005:2010) {
         df <- df |>
           mutate(genero = ifelse(genero == "MASCULINO", "1", ifelse(genero == "FEMININO", "2", "")
@@ -259,13 +262,16 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   ### characters to integers, and replace comma by dot.
   df <- df |>
     mutate(year = !!year, .before = everything()) |>
-    # collect() |>
+    # collect() |> #"causa_", "cbo_", "cnae_", "genero", "ind_", "raca_cor", "tamanho", "tipo_",
     mutate(
-      across(starts_with(c("causa_", "cbo_", "cnae_", "dia_", "escolaridade", "genero", "ind_",
-                           "idade", "mes_", "municipio", "qtd_", "raca_cor", "tamanho", "tipo_")) &
-               where(is.character), ~ str_remove_all(.x, "\\D") |> as.integer()),
-      across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), ~decimal_repair(.x))
-    )
+      across(
+        starts_with(c("dia_", "escolaridade", "idade", "mes_", "municipio", "qtd_")) &
+          where(is.character),
+        ~ str_remove_all(.x, "\\D") |> if_else(.x == "", NA_character_, .x) |> as.integer()
+      ),
+      ## doesn't seem to be necessary
+      # across(starts_with(c("rem_", "ultima_", "salario_", "tempo_e")), ~decimal_repair(.x))
+    ) |> compute()
 
 
   ### standardize IBGE industry variable

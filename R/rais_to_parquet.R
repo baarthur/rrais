@@ -78,15 +78,23 @@ rais_to_parquet <- function(file, year, columns = NULL, worker_dataset = TRUE, f
 
   ## read raw file
   print(paste0("Reading raw file for year ", year))
-  read_delim(
-    file = file,
+  arrow::open_delim_dataset(
+    sources = file,
     delim = delim,
-    locale = locale(encoding = "ISO-8859-1", decimal_mark = ","),
-    col_select = !!columns_raw,
     col_types = coltypes,
-    ...
-  ) |>
-    write_parquet(filename)
+    read_options = arrow::csv_read_options(encoding = "ISO-8859-1"),
+    convert_options = arrow::csv_convert_options(decimal_point = ",")
+  )
+
+  # read_delim(
+  #   file = file,
+  #   delim = delim,
+  #   locale = locale(encoding = "ISO-8859-1", decimal_mark = ","),
+  #   col_select = !!columns_raw,
+  #   col_types = coltypes,
+  #   ...
+  # ) |>
+  #   write_parquet(filename)
 }
 
 
