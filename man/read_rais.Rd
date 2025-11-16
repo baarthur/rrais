@@ -32,8 +32,6 @@ columns to read, and other time-specific tidying.}
 \item{worker_dataset}{When reading establishment data, set \code{worker_dataset = FALSE}. Default
 option is to read work relationship data (\code{worker_dataset = TRUE}).}
 
-\item{columns}{A \code{vector} of variables to read.}
-
 \item{vinculo_ativo}{Should only workers that were active at the end of the year be selected?
 Default is \code{TRUE}.}
 
@@ -61,7 +59,7 @@ If the 7-digit code is supplied, it will be converted to the 6-digit version.}
 
 \item{firm_filter}{A \code{vector} of firm CNPJs to use as filter, if using the identified dataset.}
 
-\item{delim}{Delimiter type. If \code{NULL} (the default), semicolon (;) will be used.}
+\item{delim}{Delimiter type. If \code{NULL} (the default), semicolon (\verb{;}) will be used.}
 
 \item{\dots}{Other variables passed on to \code{readr::read_delim()}}
 }
@@ -78,7 +76,7 @@ repairs continuous values and dates, making data robust to the various layout ch
 
 To make the data cleaning and filtering process faster, \code{read_rais()} uses
 \code{{arrow}}'s \code{parquet} format. You can either supply raw RAIS .txt files, which will be passed
-on to \code{rais_to_parquet()}, or a \code{.parquet} file produced by it.
+on to \code{open_rais_dataset()}, or a \code{.parquet} file produced by it.
 
 To make the best use of \code{arrow}'s structure, \code{read_rais()} does not pull data into memory
 unless made explicit by the argument \code{collect = TRUE}. The final user can then decide

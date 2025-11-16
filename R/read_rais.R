@@ -1,6 +1,6 @@
 #' Read Establishments and Work Relationships from RAIS dataset.
 #'
-#' @inheritParams rais_to_parquet
+#' @inheritParams open_rais_dataset
 #' @param file RAIS dataset, either in `.txt` or `.parquet` format.
 #' @param vinculo_ativo Should only workers that were active at the end of the year be selected?
 #'  Default is `TRUE`.
@@ -40,7 +40,7 @@
 #'
 #'    To make the data cleaning and filtering process faster, `read_rais()` uses
 #'    `{arrow}`'s `parquet` format. You can either supply raw RAIS .txt files, which will be passed
-#'    on to `rais_to_parquet()`, or a `.parquet` file produced by it.
+#'    on to `open_rais_dataset()`, or a `.parquet` file produced by it.
 #'
 #'    To make the best use of `arrow`'s structure, `read_rais()` does not pull data into memory
 #'    unless made explicit by the argument `collect = TRUE`. The final user can then decide
@@ -156,7 +156,7 @@ read_rais <- function(file, year, worker_dataset = TRUE, columns = NULL, vinculo
   if(stringr::str_detect(file,  "parquet$")) {
     df <- read_parquet(file, as_data_frame = FALSE, col_select = any_of(columns_raw))
   } else {
-    df <- rais_to_parquet(file = file, year = year, columns = columns_raw,
+    df <- open_rais_dataset(file = file, year = year, columns = columns_raw,
                           worker_dataset = worker_dataset, filename = tempfile, delim = delim, ...)
   }
 
